@@ -1,0 +1,135 @@
+{
+  "reference_metadata": {
+    "source": "references/mdx-reference.mov",
+    "total_duration_seconds": 31.25,
+    "fps": 49.15,
+    "hero_sequence_duration_seconds": 7.792,
+    "hero_sequence_frames": 383,
+    "particle_count": 3200,
+    "spatial_anchor": {
+      "viewport_x_percent": 61.8,
+      "viewport_y_percent": 44.4,
+      "bounding_box_aspect": 0.97
+    }
+  },
+  "transitions": [
+    {
+      "id": "morph_01_globe_to_electricity",
+      "from_state": "State_Globe",
+      "to_state": "State_Electricity",
+      "hold_duration_seconds": 2.24,
+      "hold_frames_mdx": 110,
+      "hold_frames_blender_24fps": 55,
+      "morph_start_seconds": 2.24,
+      "morph_duration_seconds": 0.89,
+      "peak_deformation_seconds": 2.69,
+      "peak_deformation_frame_blender_24fps": 67.5,
+      "peak_deformation_characteristics": {
+        "radial_swell_percent": 4.2,
+        "silhouette": "equatorial wave dispersion with horizontal crest harmonic decoupling",
+        "internal_orange_energy_multiplier": 1.25
+      },
+      "resolution_duration_seconds": 0.44,
+      "resolution_seconds": 3.13,
+      "resolution_frame_blender_24fps": 80.0,
+      "settle_duration_seconds": 0.23,
+      "settle_seconds": 3.36,
+      "settle_frame_blender_24fps": 94.7,
+      "settle_behavior": "damped physical relaxation back to scale 1.00; wave harmonics stabilize"
+    },
+    {
+      "id": "morph_02_electricity_to_fire",
+      "from_state": "State_Electricity",
+      "to_state": "State_Fire",
+      "hold_duration_seconds": 0.14,
+      "hold_frames_mdx": 7,
+      "hold_frames_blender_24fps": 9,
+      "morph_start_seconds": 3.50,
+      "morph_duration_seconds": 0.53,
+      "peak_deformation_seconds": 3.78,
+      "peak_deformation_frame_blender_24fps": 118.5,
+      "peak_deformation_characteristics": {
+        "vertical_stretch_percent": 5.0,
+        "horizontal_compression_percent": -2.0,
+        "silhouette": "turbulent volumetric flame plume with upward particle streams",
+        "internal_orange_energy_multiplier": 1.45
+      },
+      "resolution_duration_seconds": 0.25,
+      "resolution_seconds": 4.03,
+      "resolution_frame_blender_24fps": 131.0,
+      "settle_duration_seconds": 0.22,
+      "settle_seconds": 4.25,
+      "settle_frame_blender_24fps": 148.7,
+      "settle_behavior": "flame tips gently curl and relax; laminar flow equilibrium achieved"
+    },
+    {
+      "id": "morph_03_fire_to_lock",
+      "from_state": "State_Fire",
+      "to_state": "State_Lock",
+      "hold_duration_seconds": 0.14,
+      "hold_frames_mdx": 7,
+      "hold_frames_blender_24fps": 11,
+      "morph_start_seconds": 4.39,
+      "morph_duration_seconds": 0.53,
+      "peak_deformation_seconds": 4.68,
+      "peak_deformation_frame_blender_24fps": 174.5,
+      "peak_deformation_characteristics": {
+        "radial_compression_percent": -3.0,
+        "silhouette": "hybrid mechanical-energy form: arch shackle loop curling at apex with dense cylindrical tumbler consolidation",
+        "internal_orange_energy_multiplier": 1.20
+      },
+      "resolution_duration_seconds": 0.24,
+      "resolution_seconds": 4.92,
+      "resolution_frame_blender_24fps": 187.0,
+      "settle_duration_seconds": 0.33,
+      "settle_seconds": 5.25,
+      "settle_frame_blender_24fps": 197.4,
+      "settle_behavior": "micro-spring relaxation into rigid mechanical padlock equilibrium; shadow deepens"
+    },
+    {
+      "id": "hero_exit_to_editorial_01",
+      "from_state": "State_Lock",
+      "to_state": "Editorial_01_Scene",
+      "hold_duration_seconds": 1.06,
+      "hold_frames_mdx": 52,
+      "hold_frames_blender_24fps": 24,
+      "morph_start_seconds": 6.31,
+      "morph_duration_seconds": 1.48,
+      "peak_deformation_seconds": 7.02,
+      "peak_deformation_frame_blender_24fps": 230.3,
+      "peak_deformation_characteristics": {
+        "scale_reduction": 0.88,
+        "shadow_softening": "diffuses from 420px to 540px with reduced alpha",
+        "orange_atmosphere": "expands from localized 700px core to 1200px ambient backdrop",
+        "editorial_headline_overlap": "enters at 6.31s reaching 100% opacity at 7.79s"
+      },
+      "resolution_duration_seconds": 0.77,
+      "resolution_seconds": 7.79,
+      "resolution_frame_blender_24fps": 240.0,
+      "settle_duration_seconds": 0.0,
+      "settle_seconds": 7.79,
+      "settle_frame_blender_24fps": 240.0,
+      "settle_behavior": "seamless cinematic handoff: particle object yields to full editorial headline"
+    }
+  ],
+  "kinematic_rules": {
+    "rotation": {
+      "type": "independent_continuous_z_axis",
+      "total_degrees_blender": 360.0,
+      "rate_per_second_mdx": 46.2,
+      "boundary_pause": false,
+      "reversal_capable": true
+    },
+    "particle_identity": {
+      "vertex_count": 3200,
+      "topology_preserved": true,
+      "mesh_swapping": false,
+      "crossfade": false
+    },
+    "compositing": {
+      "mode": "webgl_dual_alpha_rgba",
+      "background_box": false,
+      "blend_mode": "premultiplied_alpha_over_canvas"
+    }
+  }
+}

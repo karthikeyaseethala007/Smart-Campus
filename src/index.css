@@ -1,0 +1,1608 @@
+/* ==========================================================================
+   SMART CAMPUS SECURITY & AUTOMATION SYSTEM
+   MDX-Inspired Digital Experience & Design Specification
+   Exact Brand Palette: Black, Slate, Dark Navy, White, Orange (#FF8200), Grey, Off-White, Dark Green/Black, Critical Red (#FF0000), Light
+   ========================================================================== */
+
+:root {
+  /* Exact User Reference Palette */
+  --palette-black: #000000;
+  --palette-slate: #5B6871;
+  --palette-dark-navy: #101820;
+  --palette-white: #FFFFFF;
+  --palette-orange: #FF8200; /* Primary Brand / Focus / Active */
+  --palette-grey: #8A8F8D;
+  --palette-off-white: #FCFCFD;
+  --palette-deep-dark: #031819;
+  --palette-critical-red: #FF0000; /* STRICTLY for critical alarms/fire */
+  --palette-light: #EFFFFF;
+  --palette-feffff: #FEFFFF;
+
+  /* Emil Kowalski Animation & Motion Tokens */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-button: 160ms;
+  --duration-popover: 180ms;
+  --duration-tab: 200ms;
+  --duration-modal: 250ms;
+
+  /* MDX Primary Scale (Slate-Navy) */
+  --color-primary-50: #f5f7fa;
+  --color-primary-100: #ebf0f4;
+  --color-primary-200: #d1dbe6;
+  --color-primary-300: #adc2d6;
+  --color-primary-400: #7c9ec0;
+  --color-primary-500: #5580aa;
+  --color-primary-600: #5B6871; /* Exact Slate */
+  --color-primary-700: #3a5774;
+  --color-primary-800: #2c4258;
+  --color-primary-900: #101820; /* Exact Dark Navy */
+  --color-primary-950: #031819; /* Exact Deep Dark */
+
+  /* Brand Orange Scale */
+  --color-warm-50: #fef8f0;
+  --color-warm-100: #fdf0e2;
+  --color-warm-200: #fbdcbb;
+  --color-warm-300: #ffc485;
+  --color-warm-400: #ffa13d;
+  --color-warm-500: #FF8200; /* Exact Brand Orange */
+  --color-warm-600: #d66f00;
+  --color-warm-700: #ad5a00;
+  --color-warm-800: #854500;
+  --color-warm-900: #5e3408;
+  --color-warm-950: #3d2205;
+
+  /* Semantic */
+  --color-success: #22c55e;
+  --color-warning: #FF8200; /* Warm warning */
+  --color-error: #FF0000;   /* Exact Critical Red */
+
+  /* Semantic Bindings (Light Mode) */
+  --color-ink-black: var(--color-primary-950);
+  --color-paper-white: #ffffff;
+  --color-mist-gray: var(--color-primary-100);
+  --color-fog-white: var(--color-primary-50);
+  --color-slate-gray: var(--color-primary-600);
+  --color-ash-gray: var(--color-primary-400);
+  --color-smoke-gray: var(--color-primary-300);
+  --color-blush-peach: var(--color-warm-100);
+  --color-sienna-brown: var(--color-warm-500);
+
+  /* Typography — Font Families (MDX Editorial Matching) */
+  --font-display: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-editorial: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  --font-signifier: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-sohne: 'Outfit', 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Typography — MDX Hierarchy Scale */
+  --text-xs: 0.544rem;
+  --text-sm: 0.75rem;
+  --text-base: 0.938rem;
+  --text-lg: 1.301rem;
+  --text-xl: 1.751rem;
+  --text-2xl: 1.991rem;
+  --text-3xl: 2.761rem;
+  --text-4xl: 3.346rem;
+
+  /* Backward Compatibility Type Scales */
+  --text-caption: 0.75rem;
+  --leading-caption: 1.5;
+
+  --text-body-sm: 0.813rem;
+  --leading-body-sm: 1.4;
+
+  --text-body: 0.938rem;
+  --leading-body: 1.45;
+
+  --text-body-lg: 1.301rem;
+  --leading-body-lg: 1.4;
+
+  --text-subheading: 1.751rem;
+  --leading-subheading: 1.35;
+
+  --text-heading-sm: 1.991rem;
+  --leading-heading-sm: 1.25;
+  --tracking-heading-sm: -0.02em;
+
+  --text-heading: 2.761rem;
+  --leading-heading: 1.2;
+  --tracking-heading: -0.03em;
+
+  --text-heading-lg: 3.346rem;
+  --leading-heading-lg: 1.15;
+  --tracking-heading-lg: -0.03em;
+
+  --text-display: 4.5rem;
+  --leading-display: 1.08;
+  --tracking-display: -0.04em;
+
+  /* Typography — Weights */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  /* MDX Spacing Rhythm */
+  --space-0: 0;
+  --space-xs: 0.375rem;
+  --space-sm: 0.625rem;
+  --space-md: 0.875rem;
+  --space-lg: 1.25rem;
+  --space-xl: 1.5rem;
+  --space-2xl: 2.25rem;
+  --space-3xl: 2.625rem;
+
+  /* Spacing Scale Compatibility */
+  --spacing-4: 4px;
+  --spacing-8: 0.625rem;
+  --spacing-12: 0.875rem;
+  --spacing-16: 1.25rem;
+  --spacing-20: 1.5rem;
+  --spacing-24: 1.5rem;
+  --spacing-28: 1.75rem;
+  --spacing-32: 2.25rem;
+  --spacing-40: 2.625rem;
+  --spacing-64: 4rem;
+  --spacing-80: 5rem;
+  --spacing-96: 6rem;
+  --spacing-124: 7.75rem;
+  --spacing-128: 8rem;
+  --spacing-160: 10rem;
+
+  /* Layout */
+  --page-max-width: 1240px;
+  --section-gap: 96px;
+  --card-padding: 24px;
+  --element-gap: 12px;
+
+  /* MDX Shape Scale */
+  --radius-sm: 0.6567rem;
+  --radius-md: 1.3135rem;
+  --radius-lg: 2.6269rem;
+  --radius-xl: 50%;
+  --radius-2xl: 100%;
+  --radius-full: 9999px;
+
+  --radius-cards: 1.3135rem;
+  --radius-images: 0.6567rem;
+  --radius-inputs: 0.6567rem;
+  --radius-buttons: 9999px;
+  --radius-smallcards: 0.6567rem;
+  --radius-elevatedcards: 1.3135rem;
+
+  /* MDX Elevation — Subtle dark-blue tinted elevation */
+  --shadow-subtle: 0 2px 8px -1px rgba(16, 24, 32, 0.05), 0 0 0 1px rgba(16, 24, 32, 0.06);
+  --shadow-subtle-2: 0 12px 30px -4px rgba(16, 24, 32, 0.08), 0 0 0 1px rgba(16, 24, 32, 0.06);
+  --shadow-subtle-3: 0 24px 50px -10px rgba(16, 24, 32, 0.12), 0 0 0 1px rgba(16, 24, 32, 0.08);
+
+  /* Surfaces */
+  --surface-canvas: var(--color-primary-50);
+  --surface-card-mist: #ffffff;
+  --surface-section-fog: var(--color-primary-50);
+  --surface-accent-blush: var(--color-warm-100);
+  --surface-elevated-white: #ffffff;
+
+  /* Hairline Borders */
+  --border-hairline: 1px solid rgba(16, 24, 32, 0.08);
+  --border-subtle: 1px solid rgba(16, 24, 32, 0.05);
+}
+
+/* ==========================================================================
+   DARK THEME SYSTEM (MDX Deep Slate-Navy)
+   Deepest slate-navy base -> Charcoal-blue surfaces -> Warm amber accents
+   ========================================================================== */
+.dark, [data-theme="dark"] {
+  /* Semantic Bindings (Dark Mode) */
+  --color-ink-black: var(--color-primary-50);
+  --color-paper-white: var(--color-primary-950);
+  --color-mist-gray: var(--color-primary-900);
+  --color-fog-white: var(--color-primary-900);
+  --color-slate-gray: var(--color-primary-300);
+  --color-ash-gray: var(--color-primary-400);
+  --color-smoke-gray: var(--color-primary-500);
+  --color-blush-peach: rgba(255, 161, 61, 0.14);
+  --color-sienna-brown: var(--color-warm-400);
+
+  /* Surfaces Hierarchy */
+  --surface-canvas: var(--color-primary-950);
+  --surface-card-mist: var(--color-primary-900);
+  --surface-section-fog: #16202c;
+  --surface-accent-blush: rgba(255, 161, 61, 0.12);
+  --surface-elevated-white: var(--color-primary-800);
+
+  /* Hairline Borders */
+  --border-hairline: 1px solid rgba(209, 219, 230, 0.12);
+  --border-subtle: 1px solid rgba(209, 219, 230, 0.07);
+
+  /* Shadows */
+  --shadow-subtle: 0 2px 10px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(209, 219, 230, 0.08);
+  --shadow-subtle-2: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(209, 219, 230, 0.1);
+  --shadow-subtle-3: 0 24px 50px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(209, 219, 230, 0.12);
+}
+
+/* Base View Transition properties — Optimized Skiper26-Style */
+::view-transition-group(root) {
+  animation-duration: 0.55s;
+  animation-timing-function: ease-out;
+}
+
+::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  animation: skiper26-circle-reveal 0.55s ease-out forwards;
+  mix-blend-mode: normal;
+  z-index: 9999;
+}
+
+@keyframes skiper26-circle-reveal {
+  from {
+    clip-path: circle(0% at var(--theme-reveal-x, 50%) var(--theme-reveal-y, 50%));
+  }
+  to {
+    clip-path: circle(150% at var(--theme-reveal-x, 50%) var(--theme-reveal-y, 50%));
+  }
+}
+
+/* Base Resets */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  font-family: var(--font-sohne);
+  font-size: var(--text-body);
+  color: var(--color-ink-black);
+  background-color: var(--surface-canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: var(--leading-body);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-ink-black);
+  line-height: 1.15;
+}
+
+h4, h5, h6 {
+  font-family: var(--font-sohne);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-ink-black);
+  line-height: 1.35;
+}
+
+p {
+  color: var(--color-slate-gray);
+  line-height: var(--leading-body);
+}
+
+button, .btn, [role="button"] {
+  font-family: var(--font-sohne);
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
+  transition: transform var(--duration-button) var(--ease-out), opacity var(--duration-button) ease;
+}
+
+button:active:not(:disabled), .btn:active:not(:disabled), [role="button"]:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--palette-orange);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   STEEP COMPONENT PRIMITIVES
+   ========================================================================== */
+
+/* 1. Display Serif Headline */
+.display-serif {
+  font-family: var(--font-signifier);
+  font-size: var(--text-display);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  color: var(--color-ink-black);
+}
+
+.display-serif em, .display-serif i, .display-serif .italic, .italic {
+  font-family: var(--font-signifier);
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+}
+
+@media (max-width: 768px) {
+  .hidden-mobile {
+    display: none !important;
+  }
+  .display-serif {
+    font-size: var(--text-heading);
+    letter-spacing: var(--tracking-heading);
+  }
+}
+
+/* 2. Editorial Section Heading */
+.heading-editorial {
+  font-family: var(--font-signifier);
+  font-size: var(--text-heading-lg);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-heading-lg);
+  letter-spacing: var(--tracking-heading-lg);
+  color: var(--color-ink-black);
+}
+
+.heading-editorial em, .heading-editorial i {
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .heading-editorial {
+    font-size: var(--text-heading-sm);
+    letter-spacing: var(--tracking-heading-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .display-serif {
+    font-size: 34px;
+    letter-spacing: -0.6px;
+    line-height: 1.2;
+  }
+  .heading-editorial {
+    font-size: 24px;
+    letter-spacing: -0.3px;
+    line-height: 1.25;
+  }
+}
+
+/* 3. Subheading & Meta */
+.subhead-editorial {
+  font-family: var(--font-sohne);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  color: var(--color-slate-gray);
+}
+
+/* 4. Pill Button — Filled (#17191c, white text, 9999px radius) */
+.pill-btn-filled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-8);
+  border-radius: var(--radius-buttons);
+  background-color: var(--color-ink-black);
+  color: var(--color-paper-white);
+  border: 1px solid var(--color-ink-black);
+  font-size: 16px;
+  font-weight: var(--font-weight-regular);
+  padding: 10px 24px;
+  text-decoration: none;
+}
+
+.pill-btn-filled:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.pill-btn-filled:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 4b. Shimmer Button (Steep Editorial Micro-interaction) */
+.shimmer-button {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-8);
+  border-radius: var(--radius-buttons);
+  background-color: var(--color-ink-black);
+  color: var(--color-paper-white);
+  border: 1px solid var(--color-ink-black);
+  font-family: var(--font-sohne);
+  font-size: 16px;
+  font-weight: var(--font-weight-regular);
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.2s ease;
+  transform: translateZ(0);
+}
+
+.shimmer-button:hover:not(:disabled) {
+  opacity: 0.94;
+}
+
+.shimmer-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.shimmer-button:focus-visible {
+  outline: 2px solid var(--color-ink-black);
+  outline-offset: 2px;
+}
+
+.shimmer-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.shimmer-sweep {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: translateX(-100%);
+  opacity: 0;
+  z-index: 0;
+}
+
+.shimmer-button:hover:not(:disabled) .shimmer-sweep,
+.shimmer-button:focus-visible .shimmer-sweep {
+  opacity: 1;
+  animation: shimmer-glide 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes shimmer-glide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-sweep {
+    display: none !important;
+    animation: none !important;
+  }
+  .shimmer-button {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* 5. Pill Button — Ghost (transparent, #17191c stroke, 9999px radius) */
+.pill-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-8);
+  border-radius: var(--radius-buttons);
+  background-color: transparent;
+  color: var(--color-ink-black);
+  border: 1px solid var(--color-ink-black);
+  font-size: 16px;
+  font-weight: var(--font-weight-regular);
+  padding: 10px 24px;
+  text-decoration: none;
+}
+
+.pill-btn-ghost:hover:not(:disabled) {
+  background-color: var(--color-mist-gray);
+}
+
+.pill-btn-ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Small Pill Control */
+.pill-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--radius-buttons);
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  border: 1px solid rgba(23, 25, 28, 0.15);
+  background-color: transparent;
+  color: var(--color-ink-black);
+}
+
+.pill-btn-sm.active {
+  background-color: var(--color-ink-black);
+  color: var(--color-paper-white);
+  border-color: var(--color-ink-black);
+}
+
+/* 6. Text Link with Arrow */
+.text-link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sohne);
+  font-size: 16px;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-ink-black);
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.text-link-arrow:hover {
+  text-decoration: underline;
+}
+
+/* 7. Neutral Card (#f2f2f3, 24px radius, flat) */
+.neutral-card {
+  background-color: var(--color-mist-gray);
+  border-radius: var(--radius-cards);
+  border: none;
+  padding: var(--card-padding);
+}
+
+/* 8. Accent Peach Card (#fbe1d1, #5d2a1a text, 24px radius) */
+.accent-peach-card {
+  background-color: var(--color-blush-peach);
+  color: var(--color-sienna-brown);
+  border-radius: var(--radius-cards);
+  border: none;
+  padding: 32px 36px;
+}
+
+.accent-peach-card h1,
+.accent-peach-card h2,
+.accent-peach-card h3,
+.accent-peach-card h4 {
+  color: var(--color-sienna-brown);
+}
+
+.accent-peach-card p {
+  color: var(--color-sienna-brown);
+  opacity: 0.9;
+}
+
+/* 9. Floating Product Artifact (#ffffff, 20px radius, --shadow-subtle-3) */
+.floating-artifact {
+  background-color: var(--color-paper-white);
+  border-radius: var(--radius-elevatedcards);
+  box-shadow: var(--shadow-subtle-3);
+  padding: 20px 24px;
+  position: relative;
+}
+
+/* 10. Tag / Category Label (Sohne 14px, #979799, ghost grouping) */
+.tag-category {
+  font-family: var(--font-sohne);
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-ash-gray);
+  text-transform: capitalize;
+  letter-spacing: 0;
+}
+
+/* 11. AI Input / Composer */
+.composer-input {
+  background-color: var(--color-paper-white);
+  border: 1px solid #ececec;
+  border-radius: var(--radius-inputs);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.composer-input input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-sohne);
+  font-size: 16px;
+  color: var(--color-ink-black);
+  width: 100%;
+}
+
+.composer-input input::placeholder {
+  color: var(--color-smoke-gray);
+}
+
+/* 12. Pill Status Badges */
+.pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-buttons);
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: var(--font-weight-regular);
+}
+
+.pill-badge-neutral {
+  background-color: var(--color-mist-gray);
+  color: var(--color-ink-black);
+}
+
+.pill-badge-peach {
+  background-color: var(--color-blush-peach);
+  color: var(--color-sienna-brown);
+}
+
+.pill-badge-ink {
+  background-color: var(--color-ink-black);
+  color: var(--color-paper-white);
+}
+
+.pill-badge-safe {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid rgba(22, 101, 52, 0.15);
+}
+
+.pill-badge-warning {
+  background-color: #fffbeb;
+  color: #92400e;
+  border: 1px solid rgba(146, 64, 14, 0.2);
+}
+
+.pill-badge-critical {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid rgba(153, 27, 27, 0.2);
+}
+
+/* Status Indicator Dot */
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+.status-dot-safe {
+  background-color: #16a34a;
+}
+
+.status-dot-warning {
+  background-color: #d97706;
+}
+
+.status-dot-critical {
+  background-color: #dc2626;
+  animation: pulse 2s infinite;
+}
+
+.status-dot-ink {
+  background-color: var(--color-ink-black);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Section Wrapper */
+.section-editorial {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(23, 25, 28, 0.12);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(23, 25, 28, 0.25);
+}
+
+/* ==========================================================================
+   Accessibility Utilities
+   ========================================================================== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ==========================================================================
+   InteractiveHoverButton (Steep Operational Action Component)
+   Pill button (9999px radius) featuring restrained center dot expansion
+   and subtle arrow slide on hover. Preserves Steep typography and colors.
+   ========================================================================== */
+.interactive-hover-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-buttons);
+  font-family: var(--font-sohne);
+  font-size: 14px;
+  font-weight: 450;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  border: 1px solid var(--color-ink-black);
+  padding: 8px 20px;
+  background-color: transparent;
+  color: var(--color-ink-black);
+  transition: border-color 0.25s ease, transform 0.15s ease, opacity 0.15s ease, box-shadow 0.2s ease;
+  transform: translateZ(0);
+}
+
+.interactive-hover-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.interactive-hover-btn:focus-visible {
+  outline: 2px solid var(--color-ink-black);
+  outline-offset: 2px;
+}
+
+.interactive-hover-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Expanding Dot */
+.interactive-hover-btn-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease;
+}
+
+.interactive-hover-btn:hover:not(:disabled) .interactive-hover-btn-dot {
+  transform: scale(45);
+}
+
+/* Idle Content */
+.interactive-hover-btn-idle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  white-space: nowrap;
+}
+
+.interactive-hover-btn:hover:not(:disabled) .interactive-hover-btn-idle {
+  transform: translateX(16px);
+  opacity: 0;
+}
+
+/* Hover Content */
+.interactive-hover-btn-hover {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transform: translateX(-16px);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.interactive-hover-btn:hover:not(:disabled) .interactive-hover-btn-hover {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Variants */
+/* Ghost (default outline pill) */
+.interactive-hover-btn-ghost {
+  background-color: transparent;
+  color: var(--color-ink-black);
+  border-color: var(--color-ink-black);
+}
+.interactive-hover-btn-ghost .interactive-hover-btn-dot {
+  background-color: var(--color-ink-black);
+}
+.interactive-hover-btn-ghost .interactive-hover-btn-hover {
+  color: var(--color-paper-white);
+}
+
+/* Filled (solid ink black) */
+.interactive-hover-btn-filled {
+  background-color: var(--color-ink-black);
+  color: var(--color-paper-white);
+  border-color: var(--color-ink-black);
+}
+.interactive-hover-btn-filled .interactive-hover-btn-dot {
+  background-color: rgba(255, 255, 255, 0.45);
+}
+.interactive-hover-btn-filled:hover:not(:disabled) .interactive-hover-btn-dot {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.interactive-hover-btn-filled .interactive-hover-btn-hover {
+  color: var(--color-paper-white);
+}
+
+/* Sienna / Critical Simulation (Simulation & Emergency controls) */
+.interactive-hover-btn-sienna {
+  background-color: transparent;
+  color: var(--color-sienna-brown);
+  border-color: var(--color-sienna-brown);
+}
+.interactive-hover-btn-sienna .interactive-hover-btn-dot {
+  background-color: var(--color-sienna-brown);
+}
+.interactive-hover-btn-sienna .interactive-hover-btn-hover {
+  color: var(--color-paper-white);
+}
+
+/* Sienna Filled */
+.interactive-hover-btn-sienna-filled {
+  background-color: var(--color-sienna-brown);
+  color: var(--color-paper-white);
+  border-color: var(--color-sienna-brown);
+}
+.interactive-hover-btn-sienna-filled .interactive-hover-btn-dot {
+  background-color: rgba(255, 255, 255, 0.45);
+}
+.interactive-hover-btn-sienna-filled:hover:not(:disabled) .interactive-hover-btn-dot {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.interactive-hover-btn-sienna-filled .interactive-hover-btn-hover {
+  color: var(--color-paper-white);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .interactive-hover-btn,
+  .interactive-hover-btn-dot,
+  .interactive-hover-btn-idle,
+  .interactive-hover-btn-hover {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  .interactive-hover-btn:hover:not(:disabled) .interactive-hover-btn-dot {
+    display: none !important;
+  }
+  .interactive-hover-btn:hover:not(:disabled) .interactive-hover-btn-idle {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .interactive-hover-btn .interactive-hover-btn-hover {
+    display: none !important;
+  }
+}
+
+/* =========================================================================
+   Magic UI Marquee Interaction & Editorial Capability Cards
+   ========================================================================= */
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - var(--gap, 24px)));
+  }
+}
+
+@keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-100% - var(--gap, 24px)));
+  }
+}
+
+.magicui-marquee {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  gap: var(--gap, 24px);
+  --gap: 24px;
+  --duration: 32s;
+  position: relative;
+  width: 100%;
+}
+
+.magicui-marquee-row {
+  flex-direction: row;
+}
+
+.magicui-marquee-col {
+  flex-direction: column;
+}
+
+.magicui-marquee-content {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: var(--gap, 24px);
+}
+
+.magicui-marquee-content-horizontal {
+  flex-direction: row;
+  animation: marquee var(--duration, 32s) linear infinite;
+}
+
+.magicui-marquee-content-vertical {
+  flex-direction: column;
+  animation: marquee-vertical var(--duration, 32s) linear infinite;
+}
+
+.magicui-marquee-reverse .magicui-marquee-content,
+.magicui-marquee-reverse .magicui-marquee-content-horizontal,
+.magicui-marquee .marquee-reverse-dir {
+  animation-direction: reverse;
+}
+
+.magicui-marquee-pause-hover:hover .magicui-marquee-content,
+.magicui-marquee-pause-hover:hover .magicui-marquee-content-horizontal,
+.magicui-marquee-pause-hover:hover .magicui-marquee-content-vertical {
+  animation-play-state: paused;
+}
+
+/* Steep Editorial Capability Marquee Card */
+.capability-marquee-card {
+  background-color: var(--color-mist-gray);
+  border: 1px solid rgba(23, 25, 28, 0.08);
+  border-radius: var(--radius-cards);
+  padding: 34px 30px;
+  width: clamp(300px, 85vw, 380px);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  text-align: left;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.capability-marquee-card:hover {
+  border-color: rgba(23, 25, 28, 0.16);
+  background-color: #ececed;
+}
+
+.capability-marquee-card-icon {
+  color: var(--color-ink-black);
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.capability-marquee-card-title {
+  font-family: var(--font-signifier);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--color-ink-black);
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.capability-marquee-card-desc {
+  font-size: 15px;
+  font-family: var(--font-workhorse);
+  color: var(--color-slate-gray);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Subtle Edge Fade Blending Masks */
+.marquee-edge-fade-left {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 120px;
+  background: linear-gradient(to right, var(--color-paper-white, #ffffff) 20%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.marquee-edge-fade-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 120px;
+  background: linear-gradient(to left, var(--color-paper-white, #ffffff) 20%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+@media (max-width: 640px) {
+  .marquee-edge-fade-left,
+  .marquee-edge-fade-right {
+    width: 48px;
+  }
+}
+
+/* Accessibility: Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .magicui-marquee {
+    overflow-x: auto;
+  }
+  .magicui-marquee-content,
+  .magicui-marquee-content-horizontal,
+  .magicui-marquee-content-vertical {
+    animation: none !important;
+    transform: none !important;
+  }
+  .marquee-edge-fade-left,
+  .marquee-edge-fade-right {
+    display: none;
+  }
+}
+
+/* =========================================================================
+   Magic UI Text 3D Flip Component Styles
+   ========================================================================= */
+
+.text-3d-flip-wrapper {
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+  margin: 0;
+  padding: 0;
+}
+
+.text-3d-flip-line {
+  margin: 0;
+  padding: 0;
+  line-height: inherit;
+  letter-spacing: inherit;
+}
+
+.text-3d-flip-word {
+  display: inline-block;
+  white-space: nowrap;
+  margin: 0;
+  padding: 0;
+  line-height: inherit;
+  letter-spacing: inherit;
+}
+
+.text-3d-flip-char {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  line-height: inherit;
+  letter-spacing: inherit;
+  vertical-align: baseline;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-3d-flip-char {
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* =========================================================================
+   BentoGrid & BentoCard (Magic UI Pattern on Warm Paper)
+   ========================================================================= */
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 28px;
+  width: 100%;
+}
+
+.bento-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-cards);
+  background-color: var(--color-paper-white);
+  border: var(--border-hairline);
+  box-shadow: var(--shadow-subtle);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justifyContent: space-between;
+}
+
+.bento-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -8px rgba(23, 25, 28, 0.08), 0 0 0 1px rgba(23, 25, 28, 0.08);
+}
+
+.bento-card-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.bento-card:hover .bento-card-bg {
+  transform: scale(1.025);
+}
+
+.bento-card-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(circle at 80% 0%, rgba(251, 225, 209, 0.15), transparent 75%);
+}
+
+.bento-card:hover .bento-card-overlay {
+  opacity: 1;
+}
+
+.bento-card-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justifyContent: space-between;
+  height: 100%;
+}
+
+/* 3 + 2 layout on desktop */
+.bento-col-3 {
+  grid-column: span 2 / span 2;
+}
+
+.bento-col-2 {
+  grid-column: span 3 / span 3;
+}
+
+@media (max-width: 1024px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .bento-col-3,
+  .bento-col-2 {
+    grid-column: span 1 / span 1;
+  }
+  .bento-col-2:last-child {
+    grid-column: span 2 / span 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .bento-col-3,
+  .bento-col-2,
+  .bento-col-2:last-child {
+    grid-column: span 1 / span 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bento-card,
+  .bento-card:hover,
+  .bento-card-bg,
+  .bento-card:hover .bento-card-bg,
+  .bento-card-overlay {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   Smooth Cursor — Active only when SmoothCursor is actively tracking pointer
+   ========================================================================== */
+html.has-smooth-cursor,
+html.has-smooth-cursor body,
+html.has-smooth-cursor * {
+  cursor: none !important;
+}
+
+html.has-smooth-cursor input,
+html.has-smooth-cursor textarea,
+html.has-smooth-cursor select,
+html.has-smooth-cursor [contenteditable="true"] {
+  cursor: text !important;
+}
+
+/* ==========================================================================
+   STEEP EDITORIAL DARK MODE ENHANCEMENTS
+   ========================================================================== */
+.dark .pill-btn-filled {
+  background-color: #ffffff;
+  color: #17191c;
+  border-color: #ffffff;
+}
+
+.dark .pill-btn-filled:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.dark .pill-btn-ghost {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.dark .pill-btn-ghost:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .pill-btn-sm {
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.dark .pill-btn-sm.active {
+  background-color: #ffffff;
+  color: #17191c;
+  border-color: #ffffff;
+}
+
+.dark .shimmer-button {
+  background-color: #ffffff;
+  color: #17191c;
+  border-color: #ffffff;
+}
+
+.dark .interactive-hover-btn {
+  background-color: var(--surface-card-mist);
+  border-color: var(--border-hairline);
+  color: #ffffff;
+}
+
+.dark .composer-input {
+  background-color: var(--surface-card-mist);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .composer-input input {
+  color: #ffffff;
+}
+
+.dark .composer-input input::placeholder {
+  color: var(--color-ash-gray);
+}
+
+.dark .neutral-card {
+  background-color: var(--surface-card-mist);
+  border: var(--border-hairline);
+}
+
+.dark .floating-artifact {
+  background-color: var(--surface-card-mist);
+  border: var(--border-hairline);
+  box-shadow: var(--shadow-subtle-3);
+}
+
+.dark .accent-peach-card {
+  background-color: rgba(251, 225, 209, 0.09);
+  border: 1px solid rgba(251, 225, 209, 0.2);
+  color: #fbe1d1;
+}
+
+.dark .accent-peach-card h1,
+.dark .accent-peach-card h2,
+.dark .accent-peach-card h3,
+.dark .accent-peach-card h4 {
+  color: #fbe1d1;
+}
+
+.dark .accent-peach-card p {
+  color: #e5c4b2;
+}
+
+/* Status Badges in Dark Mode */
+.dark .pill-badge-neutral {
+  background-color: var(--surface-card-mist);
+  color: var(--color-ink-black);
+}
+
+.dark .pill-badge-peach {
+  background-color: rgba(251, 225, 209, 0.14);
+  color: #fbe1d1;
+  border: 1px solid rgba(251, 225, 209, 0.24);
+}
+
+.dark .pill-badge-ink {
+  background-color: #ffffff;
+  color: #17191c;
+}
+
+.dark .pill-badge-safe {
+  background-color: rgba(22, 163, 74, 0.16);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.dark .pill-badge-warning {
+  background-color: rgba(217, 119, 6, 0.16);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.dark .pill-badge-critical {
+  background-color: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.dark header {
+  background-color: rgba(16, 24, 32, 0.92) !important;
+  border-color: rgba(209, 219, 230, 0.1) !important;
+}
+
+.dark .text-link-editorial {
+  color: var(--color-slate-gray);
+}
+
+.dark .text-link-editorial:hover {
+  color: #ffffff;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+/* ==========================================================================
+   MDX SPATIAL BLUEPRINT LAYOUT UTILITIES
+   ========================================================================== */
+
+.mdx-hero-viewport {
+  position: relative;
+  min-height: calc(100vh - 68px);
+  min-height: calc(100dvh - 68px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  padding: 0 0 52px 0;
+}
+
+.mdx-hero-center-stage {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 960px;
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mdx-hero-center-stage canvas {
+  pointer-events: auto;
+}
+
+.mdx-hero-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr);
+  gap: 56px;
+  align-items: end;
+  position: relative;
+  z-index: 10;
+  width: 100%;
+}
+
+.mdx-hero-headline {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 5.8vw, 5.5rem);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: var(--color-ink-black);
+  margin: 0 0 16px 0;
+}
+
+.mdx-headline-line {
+  display: block;
+  white-space: nowrap;
+}
+
+.mdx-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: var(--radius-buttons);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  border: var(--border-hairline);
+  background-color: var(--color-paper-white);
+  color: var(--color-slate-gray);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.mdx-pill:hover {
+  border-color: var(--color-sienna-brown);
+  color: var(--color-ink-black);
+}
+
+@media (max-width: 900px) {
+  .mdx-hero-viewport {
+    min-height: auto;
+    padding-top: 24px;
+    padding-bottom: 40px;
+    justify-content: flex-start;
+  }
+
+  .mdx-hero-center-stage {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    height: 380px;
+    margin-bottom: 24px;
+  }
+
+  .mdx-hero-lower {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .mdx-headline-line {
+    white-space: normal;
+  }
+}
+
+/* ==========================================================================
+   Editorial Hero Cinematic Stage & Mobile Recomposition
+   ========================================================================== */
+.hero-particle-stage {
+  position: absolute;
+  top: 40%;
+  left: clamp(52%, 58vw, 66%);
+  transform: translate(-50%, -50%);
+}
+
+@media (max-width: 868px) {
+  .hero-viewport {
+    min-height: auto !important;
+    padding-top: 100px !important;
+    padding-bottom: 48px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 36px !important;
+    justify-content: flex-start !important;
+  }
+
+  .hero-headline-block {
+    order: 1 !important;
+    width: 100% !important;
+  }
+
+  .hero-particle-stage {
+    position: relative !important;
+    top: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: min(100%, 460px) !important;
+    margin: 12px auto !important;
+    order: 2 !important;
+  }
+
+  .hero-lower-bar {
+    order: 3 !important;
+    width: 100% !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 20px !important;
+  }
+}
+
+/* Responsive Visibility Utilities */
+@media (min-width: 769px) {
+  .visible-mobile-only {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .visible-mobile-only {
+    display: flex !important;
+  }
+
+  .hero-viewport-stage {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    padding: 80px 20px 32px !important;
+    overflow-y: auto !important;
+  }
+
+  .hero-3d-object {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    width: 260px !important;
+    margin: 4px auto 16px !important;
+  }
+
+  .hero-bottom-content {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 20px !important;
+  }
+
+  .hero-bottom-content h1 {
+    font-size: 2.2rem !important;
+    line-height: 1.1 !important;
+    margin-bottom: 12px !important;
+  }
+
+  .hero-bottom-content p {
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: 16px !important;
+  }
+}
+
+

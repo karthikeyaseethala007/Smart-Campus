@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'><rect width='32' height='32' rx='8' fill='%23101820'/><circle cx='16' cy='16' r='6' stroke='%23ffa13d' stroke-width='2'/><path d='M16 6v4M16 22v4M6 16h4M22 16h4' stroke='%23adc2d6' stroke-width='2' stroke-linecap='round'/></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Campus Security · Connected Campus Operations</title>
+    <meta name="description" content="Smart Campus connects campus security, safety, access control, automation, energy telemetry and device operations in one unified operational system." />
+    <meta name="keywords" content="smart campus, campus security, IoT, access control, fire safety, energy monitoring, automation, surveillance" />
+    
+    <!-- Open Graph Metadata -->
+    <meta property="og:title" content="Smart Campus Security · Connected Campus Operations" />
+    <meta property="og:description" content="Smart Campus connects campus security, safety, access control, automation, energy telemetry and device operations in one unified operational system." />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card Metadata -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Smart Campus Security · Connected Campus Operations" />
+    <meta name="twitter:description" content="Smart Campus connects campus security, safety, access control, automation, energy telemetry and device operations in one unified operational system." />
+
+    <!-- Google Fonts: Editorial Geometric Display (Outfit) + Plus Jakarta Sans + Source Serif 4 + Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;1,8..60,400&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        try {
+          var urlParams = new URLSearchParams(window.location.search);
+          var paramTheme = urlParams.get('theme');
+          var saved = paramTheme || localStorage.getItem('smart-campus-theme');
+          if (paramTheme === 'dark' || paramTheme === 'light') {
+            localStorage.setItem('smart-campus-theme', paramTheme);
+          }
+          if (saved === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.setAttribute('data-theme', 'dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

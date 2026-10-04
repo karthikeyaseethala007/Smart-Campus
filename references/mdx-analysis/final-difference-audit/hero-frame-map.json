@@ -1,0 +1,184 @@
+{
+  "hero": [
+    {
+      "progress": 0.0,
+      "ref_frame": 0,
+      "ref_seconds": 0.0,
+      "blender_frame": 1.0,
+      "state": "State 01 (Globe) Hold Start",
+      "phase": "hold",
+      "notes": "Initial sphere geometry at rest. Subtle baseline rotation."
+    },
+    {
+      "progress": 0.1567,
+      "ref_frame": 60,
+      "ref_seconds": 1.22,
+      "blender_frame": 30.5,
+      "state": "State 01 (Globe) Steady Rotation",
+      "phase": "hold",
+      "notes": "Spherical particle shell rotating steadily around vertical axis. Constant scale 1.0."
+    },
+    {
+      "progress": 0.2872,
+      "ref_frame": 110,
+      "ref_seconds": 2.24,
+      "blender_frame": 55.0,
+      "state": "State 01 (Globe) Deformation Start",
+      "phase": "morph_start",
+      "notes": "Spherical constraint relaxes. Particles begin expanding outward and stretching along horizontal wave harmonics."
+    },
+    {
+      "progress": 0.3446,
+      "ref_frame": 132,
+      "ref_seconds": 2.69,
+      "blender_frame": 67.5,
+      "state": "State 01 -> State 02 Peak Deformation",
+      "phase": "peak_deformation",
+      "notes": "Maximum asymmetric dispersion. Particle cloud swells by +4.2% in radius. Intermediate silhouette between sphere and horizontal energy waves."
+    },
+    {
+      "progress": 0.4021,
+      "ref_frame": 154,
+      "ref_seconds": 3.13,
+      "blender_frame": 80.0,
+      "state": "State 02 (Electricity) Resolve",
+      "phase": "resolve",
+      "notes": "Electricity wave structure resolves. Horizontal ripples and field lines crystallize."
+    },
+    {
+      "progress": 0.4308,
+      "ref_frame": 165,
+      "ref_seconds": 3.36,
+      "blender_frame": 94.7,
+      "state": "State 02 (Electricity) Settle",
+      "phase": "settle",
+      "notes": "Subtle spring deceleration into stable electric wave geometry. Scale returns to 1.0."
+    },
+    {
+      "progress": 0.4386,
+      "ref_frame": 168,
+      "ref_seconds": 3.42,
+      "blender_frame": 98.7,
+      "state": "State 02 (Electricity) Hold",
+      "phase": "hold",
+      "notes": "Brief hold of electric waves with steady rotation."
+    },
+    {
+      "progress": 0.4491,
+      "ref_frame": 172,
+      "ref_seconds": 3.5,
+      "blender_frame": 104.0,
+      "state": "State 02 (Electricity) Deformation Start",
+      "phase": "morph_start",
+      "notes": "Horizontal ripples begin breaking apart. Energy shifts from equatorial spread toward vertical acceleration."
+    },
+    {
+      "progress": 0.4856,
+      "ref_frame": 186,
+      "ref_seconds": 3.78,
+      "blender_frame": 118.5,
+      "state": "State 02 -> State 03 Peak Deformation",
+      "phase": "peak_deformation",
+      "notes": "Peak turbulent deformation. Orange core light intensifies significantly (+45%). Particles stream upward in energetic tongues."
+    },
+    {
+      "progress": 0.517,
+      "ref_frame": 198,
+      "ref_seconds": 4.03,
+      "blender_frame": 131.0,
+      "state": "State 03 (Fire) Resolve",
+      "phase": "resolve",
+      "notes": "Vertical flame silhouette resolves with organized upward laminar particle flow."
+    },
+    {
+      "progress": 0.5457,
+      "ref_frame": 209,
+      "ref_seconds": 4.25,
+      "blender_frame": 148.7,
+      "state": "State 03 (Fire) Settle",
+      "phase": "settle",
+      "notes": "Flame tips gently settle, slight compression (-2% scale) into stabilized fire shape."
+    },
+    {
+      "progress": 0.5535,
+      "ref_frame": 212,
+      "ref_seconds": 4.31,
+      "blender_frame": 153.6,
+      "state": "State 03 (Fire) Hold",
+      "phase": "hold",
+      "notes": "Flame structure holds while rotating around central axis."
+    },
+    {
+      "progress": 0.564,
+      "ref_frame": 216,
+      "ref_seconds": 4.39,
+      "blender_frame": 160.0,
+      "state": "State 03 (Fire) Deformation Start",
+      "phase": "morph_start",
+      "notes": "Flame particles curl inwards at top arch. Lower particles begin organizing into cylinder base."
+    },
+    {
+      "progress": 0.6005,
+      "ref_frame": 230,
+      "ref_seconds": 4.68,
+      "blender_frame": 174.5,
+      "state": "State 03 -> State 04 Peak Deformation",
+      "phase": "peak_deformation",
+      "notes": "Peak morphological transformation. Particles compress into mechanical shackle arch and solid cylindrical body."
+    },
+    {
+      "progress": 0.6319,
+      "ref_frame": 242,
+      "ref_seconds": 4.92,
+      "blender_frame": 187.0,
+      "state": "State 04 (Lock) Resolve",
+      "phase": "resolve",
+      "notes": "Lock shape resolves clearly: arch shackle on top, cylindrical tumbler on bottom."
+    },
+    {
+      "progress": 0.6736,
+      "ref_frame": 258,
+      "ref_seconds": 5.25,
+      "blender_frame": 197.4,
+      "state": "State 04 (Lock) Settle",
+      "phase": "settle",
+      "notes": "Mechanical lock settles into equilibrium. Scale 1.0, shadow tightens slightly."
+    },
+    {
+      "progress": 0.7441,
+      "ref_frame": 285,
+      "ref_seconds": 5.8,
+      "blender_frame": 215.0,
+      "state": "State 04 (Lock) Steady Rotation",
+      "phase": "hold",
+      "notes": "Lock continues rotating smoothly as a cohesive solid particle body."
+    },
+    {
+      "progress": 0.8094,
+      "ref_frame": 310,
+      "ref_seconds": 6.31,
+      "blender_frame": 221.4,
+      "state": "Hero Exit / Editorial 01 Entry Start",
+      "phase": "scene_transition",
+      "notes": "Lock particle begins gentle optical scale reduction (0.95). Ground shadow softens. Editorial 01 headline begins entering."
+    },
+    {
+      "progress": 0.9008,
+      "ref_frame": 345,
+      "ref_seconds": 7.02,
+      "blender_frame": 230.3,
+      "state": "Hero to Editorial 01 Mid-Cross",
+      "phase": "scene_transition",
+      "notes": "Hero copy moves upward and fades. Orange atmosphere spreads into wide diffuse aura. Editorial headline at 60% opacity."
+    },
+    {
+      "progress": 1.0,
+      "ref_frame": 383,
+      "ref_seconds": 7.79,
+      "blender_frame": 240.0,
+      "state": "Editorial 01 Fully Resolved",
+      "phase": "scene_transition",
+      "notes": "Hero stage hands off to Editorial 01. Giant headline One Campus. One Connected Response. fully locked in place."
+    }
+  ]
+}
