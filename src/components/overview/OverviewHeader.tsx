@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Clock, Bell, User, ChevronDown, Check } from 'lucide-react';
+import { Shield, Clock, Bell, User, ChevronDown, Check, Search } from 'lucide-react';
 import { useAppState } from '../../services/stateContext';
 import type { UserRole } from '../../types';
 
@@ -10,6 +10,9 @@ export const OverviewHeader: React.FC = () => {
     setUserRole,
     alerts,
     setActiveTab,
+    isSystemDegraded,
+    setIsSystemDegraded,
+    setIsCommandPaletteOpen,
   } = useAppState();
 
   const [currentTime, setCurrentTime] = useState<string>('');
@@ -105,9 +108,17 @@ export const OverviewHeader: React.FC = () => {
             gap: '8px',
             padding: '6px 14px',
             borderRadius: '9999px',
-            backgroundColor: isEmergency ? 'rgba(255, 0, 0, 0.08)' : 'rgba(34, 197, 94, 0.08)',
-            border: isEmergency ? '1px solid rgba(255, 0, 0, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)',
-            color: isEmergency ? '#FF0000' : '#22c55e',
+            backgroundColor: isSystemDegraded
+              ? 'rgba(255, 130, 0, 0.08)'
+              : isEmergency
+              ? 'rgba(255, 0, 0, 0.08)'
+              : 'rgba(34, 197, 94, 0.08)',
+            border: isSystemDegraded
+              ? '1px solid rgba(255, 130, 0, 0.35)'
+              : isEmergency
+              ? '1px solid rgba(255, 0, 0, 0.3)'
+              : '1px solid rgba(34, 197, 94, 0.3)',
+            color: isSystemDegraded ? '#FF8200' : isEmergency ? '#FF0000' : '#22c55e',
             fontFamily: "var(--font-mono, monospace)",
             fontSize: '0.75rem',
             fontWeight: 700,
@@ -120,18 +131,82 @@ export const OverviewHeader: React.FC = () => {
               width: '7px',
               height: '7px',
               borderRadius: '50%',
-              backgroundColor: isEmergency ? '#FF0000' : '#22c55e',
-              boxShadow: isEmergency ? '0 0 8px #FF0000' : '0 0 8px #22c55e',
+              backgroundColor: isSystemDegraded ? '#FF8200' : isEmergency ? '#FF0000' : '#22c55e',
+              boxShadow: isSystemDegraded
+                ? '0 0 8px #FF8200'
+                : isEmergency
+                ? '0 0 8px #FF0000'
+                : '0 0 8px #22c55e',
             }}
           />
-          <span>{isEmergency ? 'EMERGENCY PROTOCOL ACTIVE' : 'ALL SYSTEMS NOMINAL'}</span>
+          <span>
+            {isSystemDegraded
+              ? 'SYSTEM DEGRADED · REALTIME OFFLINE'
+              : isEmergency
+              ? 'EMERGENCY PROTOCOL ACTIVE'
+              : 'ALL SYSTEMS NOMINAL'}
+          </span>
+          {isSystemDegraded && (
+            <button
+              onClick={() => setIsSystemDegraded(false)}
+              style={{
+                marginLeft: '6px',
+                padding: '2px 8px',
+                fontSize: '0.625rem',
+                backgroundColor: '#FF8200',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 700,
+              }}
+            >
+              RECONNECT
+            </button>
+          )}
         </div>
       </div>
 
-      {/* RIGHT: Date/Time + Notifications + Role Switcher Controls */}
+      {/* RIGHT: Search + Date/Time + Notifications + Role Switcher Controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        {/* Command Palette Button */}
+        <button
+          onClick={() => setIsCommandPaletteOpen(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 12px',
+            borderRadius: '8px',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid rgba(16, 24, 32, 0.1)',
+            cursor: 'pointer',
+            fontFamily: "var(--font-mono, monospace)",
+            fontSize: '0.688rem',
+            color: '#101820',
+            fontWeight: 600,
+          }}
+          title="Open Command Palette (⌘K)"
+        >
+          <Search size={12} color="#5B6871" />
+          <span>COMMANDS</span>
+          <kbd
+            style={{
+              fontSize: '10px',
+              padding: '1px 5px',
+              borderRadius: '4px',
+              backgroundColor: 'rgba(16, 24, 32, 0.06)',
+              color: '#5B6871',
+              fontWeight: 700,
+            }}
+          >
+            ⌘K
+          </kbd>
+        </button>
+
         {/* Date / Time */}
         <div
+          className="header-datetime-pill"
           style={{
             display: 'flex',
             alignItems: 'center',

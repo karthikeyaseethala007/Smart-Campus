@@ -1,0 +1,663 @@
+{
+  "scan_metadata": {
+    "repository": "smart-campus-security",
+    "timestamp": "2026-10-04T17:28:00Z",
+    "commit": "a744ba5",
+    "scanner": "cloudflare-security-audit",
+    "audit_type": "defensive_source_code_analysis",
+    "baseline_status": "FROZEN",
+    "summary": {
+      "critical": 3,
+      "high": 4,
+      "medium": 4,
+      "low": 2,
+      "informational": 0,
+      "total_confirmed": 13,
+      "total_rejected": 5,
+      "total_hardening": 5,
+      "total_physical_unverifiable": 3
+    }
+  },
+  "findings": [
+    {
+      "id": "SEC-CRIT-01",
+      "title": "Complete Authentication Bypass via 'x-dev-role' Request Header",
+      "severity": "CRITICAL",
+      "category": "AUTH_BYPASS",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "server/auth/authService.ts",
+        "server/api/routes.ts"
+      ],
+      "affected_components": [
+        "ServerAuthService.authenticateRequest",
+        "handleApiRequest"
+      ],
+      "description": "The server-side authentication middleware checks whether the incoming request contains an 'x-dev-role' header when no session token is provided. If this header is present with a valid role name such as 'admin', the function immediately queries the database for the first user matching that role and returns that user object as fully authenticated. No check is performed against NODE_ENV or production runtime flags, allowing any unauthenticated external caller to achieve complete root Administrator access.",
+      "prerequisites": "Network access to the REST API port (8080 or reverse proxy).",
+      "attack_path": "An attacker sends an HTTP request to any privileged endpoint (such as POST /api/zones/ZONE-GATE-01/lockdown) without an Authorization header, including only the HTTP header 'x-dev-role: admin'. The server verifies the header, authenticates the caller as Chief Administrator Ramanujan, and executes the privileged action with full clearance.",
+      "evidence": "server/auth/authService.ts lines 239-245: if (!token) { const devRole = req.headers['x-dev-role'] as UserRole; if (devRole && ['admin', 'security_officer', 'faculty', 'student'].includes(devRole)) { return Array.from(db.users.values()).find(u => u.role === devRole) || null; } return null; }",
+      "impact": "Full compromise of administrative control, privilege escalation to Chief Administrator, ability to issue emergency lockdowns, unlock access doors, and resolve or dismiss active security incidents.",
+      "exploitability": "HIGH",
+      "confidence": "CERTAIN",
+      "existing_defenses": "None. The CORS preflight configuration in server/api/routes.ts even explicitly permits 'x-dev-role' in Access-Control-Allow-Headers.",
+      "remediation": "Completely remove the 'x-dev-role' header check from ServerAuthService.authenticateRequest, or restrict it strictly to local automated testing with process.env.NODE_ENV === 'test'.",
+      "architectural_impact": "LOW"
+    },
+    {
+      "id": "SEC-CRIT-02",
+      "title": "Password Verification Failure & Optional Password Authentication Bypass",
+      "severity": "CRITICAL",
+      "category": "AUTH_BYPASS",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "server/auth/authService.ts",
+        "server/db/database.ts"
+      ],
+      "affected_components": [
+        "ServerAuthService.login",
+        "ServerAuthService.verifyPassword"
+      ],
+      "description": "Two compounded authentication flaws permit universal password bypass on the login endpoint: (1) The login handler only executes verifyPassword if a password argument is truthy; omitting the password entirely bypasses validation. (2) The verifyPassword implementation checks if storedHash contains a colon (:). The seeded administrative users in database.ts use dollar signs ($) as delimiters (e.g. '8b9c...$mock_salt$...'), causing verifyPassword to evaluate storedHash.includes(':') as false and return true unconditionally for ANY password entered.",
+      "prerequisites": "Network access to POST /api/auth/login and knowledge of a target username (e.g. 'admin').",
+      "attack_path": "An attacker sends a POST request to /api/auth/login with JSON body '{\"username\": \"admin\"}' or '{\"username\": \"admin\", \"password\": \"arbitrary_text\"}'. In both cases, password verification succeeds, brute-force tracking is cleared, and an authoritative administrative session token (tok_...) is generated and returned to the attacker.",
+      "evidence": "server/auth/authService.ts lines 77-85: public verifyPassword(password: string, storedHash: string): boolean { if (!storedHash || !storedHash.includes(':')) { return true; } ... } and lines 119-123: if (password && !this.verifyPassword(password, user.passwordHash)) { ... }",
+      "impact": "Unrestricted administrative session generation for any registered user account, resulting in complete system compromise.",
+      "exploitability": "HIGH",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Brute-force lockout is configured, but because any password evaluates to true, failed attempt counters are reset upon the first attempt.",
+      "remediation": "Enforce mandatory password input in ServerAuthService.login. Remove the mock hash fallback from verifyPassword and standardize on a verified scrypt/argon2 format across seeded database baseline.",
+      "architectural_impact": "LOW"
+    },
+    {
+      "id": "SEC-CRIT-03",
+      "title": "Arbitrary Client-Controlled State Mutation & Physical Door Unlocking via WebSocket",
+      "severity": "CRITICAL",
+      "category": "ACCESS_CONTROL",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "server/realtime/wsServer.ts",
+        "server/events/serverEventBus.ts"
+      ],
+      "affected_components": [
+        "CampusWebSocketServer.handleClientMessage",
+        "ServerEventBus.applyStateMutation"
+      ],
+      "description": "The WebSocket gateway accepts client-sent messages and forwards them directly to the server event bus (serverEventBus.processEvent). The handler only rejects events with type 'ZONE_LOCKDOWN' and 'ACCESS_OVERRIDE'. It fails to validate or reject other high-privilege event types such as 'ACCESS_GRANTED', 'ACCESS_LOCKOUT', 'ACCESS_DENIED', or 'INCIDENT_RESOLVED'. When an ACCESS_GRANTED event is received, the server event bus directly disengages the electronic door lock for the specified portal for 8 seconds.",
+      "prerequisites": "Active WebSocket connection to /ws or /campus-events.",
+      "attack_path": "An attacker establishes a WebSocket connection to ws://host:8080/ws and transmits a JSON payload: '{\"id\": \"EVT-ATTACK-01\", \"category\": \"ACCESS\", \"type\": \"ACCESS_GRANTED\", \"payload\": {\"doorId\": \"DOOR-SRV-01\", \"cardholder\": \"Intruder\"}}'. The WebSocket server forwards the event to serverEventBus, which immediately mutates the Core Server Vault door status to 'unlocked', releasing physical magnetic interlocks.",
+      "evidence": "server/realtime/wsServer.ts lines 261-276: if (parsed.type === 'ZONE_LOCKDOWN' || parsed.type === 'ACCESS_OVERRIDE') { ... return; } if (parsed.id && parsed.category && parsed.type) { serverEventBus.processEvent(parsed); } and server/events/serverEventBus.ts lines 142-156: case 'ACCESS_GRANTED': { const { doorId, cardholder } = event.payload; const door = db.accessControllers.get(doorId); if (door) { door.lockStatus = 'unlocked'; ... } }",
+      "impact": "Physical unauthorized access to restricted campus facilities (including server rooms and laboratories) by remotely disengaging electronic locks over a WebSocket connection.",
+      "exploitability": "HIGH",
+      "confidence": "CERTAIN",
+      "existing_defenses": "The server checks for ZONE_LOCKDOWN and ACCESS_OVERRIDE, but completely omits ACCESS_GRANTED, ACCESS_LOCKOUT, and incident mutation event checks.",
+      "remediation": "Do not accept authoritative domain state mutation events from client WebSockets. Restrict WebSocket client ingress strictly to PING/PONG and read-only channel subscription messages.",
+      "architectural_impact": "LOW"
+    },
+    {
+      "id": "SEC-HIGH-01",
+      "title": "Unauthenticated Door Unlock via Hardcoded Keypad PIN Endpoint",
+      "severity": "HIGH",
+      "category": "HARDCODED_CREDENTIALS",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "server/api/routes.ts",
+        "src/services/stateContext.tsx",
+        "src/components/security/InteractiveKeypadModal.tsx"
+      ],
+      "affected_components": [
+        "handleApiRequest (POST /api/access/:id/pin)",
+        "InteractiveKeypadModal"
+      ],
+      "description": "The endpoint POST /api/access/:doorId/pin does not authenticate the caller with a bearer token or mutual device certificate. Furthermore, the unlock PIN '4821' is hardcoded directly into the server route. In addition, the frontend code in InteractiveKeypadModal.tsx exposes the PIN in UI text ('DEMO: 1234') and stateContext.tsx accepts hardcoded pins ('4821', '1234', '7789').",
+      "prerequisites": "Network access to REST API port 8080.",
+      "attack_path": "An attacker issues an HTTP POST request to /api/access/DOOR-GATE-MAIN/pin with payload '{\"pin\": \"4821\"}'. The server executes the request without requiring authentication, publishes an ACCESS_GRANTED event, and releases the door solenoid.",
+      "evidence": "server/api/routes.ts lines 477-506: const accessPinMatch = pathname.match(/^\\/api\\/access\\/([^/]+)\\/pin$/); if (accessPinMatch && method === 'POST') { ... if (pin === '4821') { serverEventBus.processEvent({ ... type: 'ACCESS_GRANTED' ... }); sendJson(res, 200, { success: true, message: 'Access Granted: Relays disengaged' }); } }",
+      "impact": "Unauthenticated physical door release on any registered access controller door.",
+      "exploitability": "HIGH",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Consecutive invalid attempt rate limiting exists (3 attempts before 30s lockout), but entering the correct hardcoded PIN succeeds immediately on the first attempt.",
+      "remediation": "Authenticate the physical access controller via mutual TLS or an authenticated device token. Store hashed door PINs in the PostgreSQL database per portal rather than hardcoding static values.",
+      "architectural_impact": "MEDIUM"
+    },
+    {
+      "id": "SEC-HIGH-02",
+      "title": "Unauthenticated Wiegand Frame Ingestion with Hardcoded Badge Authorization",
+      "severity": "HIGH",
+      "category": "BROKEN_AUTHENTICATION",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "server/api/routes.ts",
+        "server/devices/wiegandParser.ts"
+      ],
+      "affected_components": [
+        "handleApiRequest (POST /api/access/:id/wiegand)",
+        "WiegandParser.parse26Bit"
+      ],
+      "description": "The endpoint POST /api/access/:doorId/wiegand accepts raw 26-bit binary frames without authentication. The backend contains hardcoded logic: facilityCode === 42 && cardNumber === 8821. Any caller can compute or synthesize a valid 26-bit parity frame matching these values to trigger physical door unlock.",
+      "prerequisites": "Network access to REST API port 8080.",
+      "attack_path": "An attacker constructs a 26-bit Wiegand frame for Facility Code 42 and Card Number 8821 ('00010101000100010011001010') and submits it to POST /api/access/DOOR-GATE-MAIN/wiegand. The server evaluates the frame as valid and authorized, releasing the lock.",
+      "evidence": "server/api/routes.ts lines 418-453: const isAuthorized = parsed.facilityCode === 42 && parsed.cardNumber === 8821; if (isAuthorized) { serverEventBus.processEvent({ ... type: 'ACCESS_GRANTED' ... }); }",
+      "impact": "Physical unauthorized access across all campus portals supporting Wiegand ingestion.",
+      "exploitability": "HIGH",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Even/odd parity calculation is verified on the 26-bit frame, but parity calculation is purely an error-detection code, not a cryptographic signature.",
+      "remediation": "Require authentication on the Wiegand gateway endpoint and validate badge numbers against the active users/badges database table rather than hardcoded constants.",
+      "architectural_impact": "LOW"
+    },
+    {
+      "id": "SEC-HIGH-03",
+      "title": "Unauthenticated Sensor Reading Injection & Hazard Trigger Spoofing",
+      "severity": "HIGH",
+      "category": "INSUFFICIENT_INPUT_VALIDATION",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "server/api/routes.ts",
+        "server/events/serverEventBus.ts"
+      ],
+      "affected_components": [
+        "handleApiRequest (POST /api/sensors/:id/reading)",
+        "ServerEventBus.applyStateMutation"
+      ],
+      "description": "The REST endpoint POST /api/sensors/:id/reading accepts arbitrary gas concentration (PPM) readings without authentication or cryptographic origin validation. Submitting a reading >= 750 PPM automatically triggers a CRITICAL security event, forces corridor ventilation fans to shut down, and generates a campus-wide incident.",
+      "prerequisites": "Network access to REST API port 8080.",
+      "attack_path": "An attacker issues an HTTP POST to /api/sensors/DEV-SMK-204/reading with body '{\"ppm\": 850}'. The server processes the event, sets zone fans to 'off', marks the sensor status as CRITICAL, and registers incident INC-GAS-003, causing severe operational disruption.",
+      "evidence": "server/api/routes.ts lines 371-408: const sensorReadingMatch = pathname.match(/^\\/api\\/sensors\\/([^/]+)\\/reading$/); if (sensorReadingMatch && method === 'POST') { ... const ppm = Number(body.ppm ?? 312); ... serverEventBus.processEvent({ ... category: 'MQ2', type: 'MQ2_READING' ... }); }",
+      "impact": "Denial of service, operational disruption, unauthorized shutdown of ventilation/life-safety systems, and induction of panic through false chemical/gas hazard alerts.",
+      "exploitability": "HIGH",
+      "confidence": "CERTAIN",
+      "existing_defenses": "The handler checks if ppm is a non-negative number, but performs no authentication or source validation.",
+      "remediation": "Require an authenticated hardware gateway token or API key for sensor telemetry submission. Ensure sensors are validated against the registered device inventory.",
+      "architectural_impact": "LOW"
+    },
+    {
+      "id": "SEC-HIGH-04",
+      "title": "Unauthenticated MQTT Ingestion Bridge Allowing Door Unlocking via Rogue Packets",
+      "severity": "HIGH",
+      "category": "INSUFFICIENT_INPUT_VALIDATION",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "server/mqtt/mqttClient.ts",
+        "docker-compose.yml"
+      ],
+      "affected_components": [
+        "ServerMqttClient.handleMessage",
+        "ServerMqttClient.connectToPhysicalBroker"
+      ],
+      "description": "The server MQTT client subscribes to wildcard topics 'campus/+/+/+'. When handling messages under the 'access' subsystem, if payloadObj.granted is truthy, the server generates an ACCESS_GRANTED domain event that releases physical door locks. In docker-compose.yml, Mosquitto is exposed on host port 1883 with no configuration file, access control lists (ACLs), or enforced authentication.",
+      "prerequisites": "Network access to the MQTT broker port 1883.",
+      "attack_path": "An attacker connects to MQTT broker on port 1883 and publishes a packet to topic 'campus/ZONE-SRV-01/access/DOOR-SRV-01' with payload '{\"granted\": true, \"cardholder\": \"Attacker\"}'. The server ingests the message, treats it as authoritative access approval, and triggers door unlock.",
+      "evidence": "server/mqtt/mqttClient.ts lines 234-250: case 'access': { if (payloadObj.granted) { event = { ... type: 'ACCESS_GRANTED', ... }; } } and docker-compose.yml lines 78-90.",
+      "impact": "Physical unauthorized access to facilities by injecting unauthenticated MQTT messages.",
+      "exploitability": "HIGH",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Topic format is verified to match 'campus/+/+/+', but topic origin and packet authenticity are never verified.",
+      "remediation": "Configure Mosquitto with password authentication and topic-level ACLs. Restrict field controllers from publishing authoritative 'granted: true' access decisions directly; badge evaluation must occur server-side against the credential store.",
+      "architectural_impact": "MEDIUM"
+    },
+    {
+      "id": "SEC-MED-01",
+      "title": "Unauthenticated Global State & Infrastructure Topology Information Disclosure",
+      "severity": "MEDIUM",
+      "category": "INFORMATION_DISCLOSURE",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "server/api/routes.ts"
+      ],
+      "affected_components": [
+        "handleApiRequest (GET /api/state)",
+        "handleApiRequest (GET /api/devices)",
+        "handleApiRequest (GET /api/cameras)",
+        "handleApiRequest (GET /api/access)",
+        "handleApiRequest (GET /api/incidents)"
+      ],
+      "description": "Multiple core query endpoints, including GET /api/state, GET /api/devices, GET /api/cameras, GET /api/access, and GET /api/incidents, do not require authentication. An anonymous caller can retrieve the entire campus infrastructure topology, including active incident reports, physical door locking states, failed attempt violation counters, and internal network IP addresses of cameras and sensors.",
+      "prerequisites": "Network access to REST API port 8080.",
+      "attack_path": "An attacker issues a GET request to http://host:8080/api/state. The server responds with 200 OK containing full lists of zones, devices, cameras, access controllers, active and historical incidents, and recent activity logs.",
+      "evidence": "server/api/routes.ts lines 200-223: if (pathname === '/api/state' && method === 'GET') { const user = await serverAuth.authenticateRequest(req); sendJson(res, 200, { ... zones: await db.getAllZones(), devices: deviceRegistry.getAllDevices(), ... }); } (No check for if (!user) is performed).",
+      "impact": "Facilitates pre-attack reconnaissance, exposes facility vulnerability states (e.g. which doors currently have failed PIN counts or security alerts), and leaks internal device IP addresses.",
+      "exploitability": "HIGH",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Global rate limiting (120 req/min) limits bulk scraping but does not prevent single-request retrieval of the complete state snapshot.",
+      "remediation": "Require valid authentication and authorization on GET /api/state and all associated query endpoints.",
+      "architectural_impact": "LOW"
+    },
+    {
+      "id": "SEC-MED-02",
+      "title": "Permissive Wildcard CORS Configuration Permitting Cross-Origin Abuse",
+      "severity": "MEDIUM",
+      "category": "CONFIGURATION",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "server/config/index.ts",
+        "server/api/routes.ts"
+      ],
+      "affected_components": [
+        "config.corsOrigin",
+        "sendJson",
+        "handleApiRequest (OPTIONS preflight)"
+      ],
+      "description": "The default CORS configuration in config/index.ts sets corsOrigin to '*'. This wildcard is reflected in Access-Control-Allow-Origin on all API responses and OPTIONS preflight handlers. In conjunction with local IP deployment and sensitive headers allowed in preflight, malicious websites visited by an operator can issue cross-origin requests to internal endpoints.",
+      "prerequisites": "Operator browser visiting a malicious external web page while connected to the campus network.",
+      "attack_path": "A campus operator with an active Command Center session visits an attacker-controlled website. The site issues cross-origin fetch requests to http://127.0.0.1:8080/api/state to exfiltrate active campus incidents and operational telemetry.",
+      "evidence": "server/config/index.ts line 46: corsOrigin: process.env.CORS_ORIGIN || '*' and server/api/routes.ts line 45: 'Access-Control-Allow-Origin': config.corsOrigin.",
+      "impact": "Cross-origin data exfiltration and potential CSRF execution on state mutation endpoints.",
+      "exploitability": "MEDIUM",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Custom headers (Authorization) require preflight, but preflight is explicitly allowed with wildcard origin.",
+      "remediation": "Restrict CORS origin to trusted campus dashboard domains and reject wildcard '*' in production.",
+      "architectural_impact": "LOW"
+    },
+    {
+      "id": "SEC-MED-03",
+      "title": "Container Execution as Root & Unrestricted Host Port Exposure",
+      "severity": "MEDIUM",
+      "category": "CONTAINER_SECURITY",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "Dockerfile",
+        "docker-compose.yml"
+      ],
+      "affected_components": [
+        "Dockerfile (runner stage)",
+        "docker-compose.yml (services)"
+      ],
+      "description": "The multi-stage Dockerfile does not define or switch to a non-root USER directive, causing the Node.js application process to execute as UID 0 (root). Additionally, docker-compose.yml binds sensitive service ports (PostgreSQL 5432, MQTT 1883/8883, RTSP 8554, API 8080) directly to 0.0.0.0 on the host rather than restricting them to the internal campus-net Docker bridge.",
+      "prerequisites": "Deployment of the container stack using the provided Dockerfile and docker-compose.yml.",
+      "attack_path": "An attacker on the external network discovers port 5432 or 1883 directly accessible on the host machine, bypassing Nginx reverse proxy controls and targeting internal database or message broker instances.",
+      "evidence": "Dockerfile lines 25-46: FROM node:22-alpine AS runner ... CMD ['node', ...] (no USER directive) and docker-compose.yml ports: '5432:5432', '1883:1883'.",
+      "impact": "Increased blast radius in the event of remote code execution; direct exposure of backend databases and messaging infrastructure to host interfaces.",
+      "exploitability": "MEDIUM",
+      "confidence": "CERTAIN",
+      "existing_defenses": "None at the container specification level.",
+      "remediation": "Add 'USER node' before CMD in Dockerfile. Remove host port publication for internal services (postgres, mqtt) or bind them strictly to 127.0.0.1 in docker-compose.yml.",
+      "architectural_impact": "LOW"
+    },
+    {
+      "id": "SEC-MED-04",
+      "title": "WebSocket Authentication Bypass in Default Simulated / Development Modes",
+      "severity": "MEDIUM",
+      "category": "AUTH_BYPASS",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "server/realtime/wsServer.ts",
+        "server/config/index.ts"
+      ],
+      "affected_components": [
+        "CampusWebSocketServer.init (upgrade handler)"
+      ],
+      "description": "In server/realtime/wsServer.ts, unauthorized WebSocket connection upgrades are ONLY rejected if BOTH config.realtimeMode === 'live' AND config.environment === 'production'. In default installations (where realtimeMode defaults to 'simulated' and environment defaults to 'development'), unauthenticated sockets are accepted as 'anonymous_guest'. These guest sockets can subscribe to the campus event bus and inject mutation events.",
+      "prerequisites": "Connection to the backend when not configured with both LIVE and PRODUCTION environment variables.",
+      "attack_path": "An unauthenticated user connects via ws://host:8080/ws without a token. Because default environment settings are in place, the server accepts the upgrade and registers the client with role 'guest', granting event bus access.",
+      "evidence": "server/realtime/wsServer.ts lines 68-76: if (!authenticatedUser && config.realtimeMode === 'live' && config.environment === 'production') { ... socket.write('HTTP/1.1 401 Unauthorized\\r\\nConnection: close\\r\\n\\r\\n'); socket.destroy(); return; }",
+      "impact": "Unauthorized access to real-time telemetry and state mutation event injection in non-live environments.",
+      "exploitability": "HIGH",
+      "confidence": "CERTAIN",
+      "existing_defenses": "The LIVE+PRODUCTION check is active, but is bypassed whenever default settings are used.",
+      "remediation": "Enforce authentication check unconditionally across all environments unless explicitly executing under process.env.NODE_ENV === 'test'.",
+      "architectural_impact": "LOW"
+    },
+    {
+      "id": "SEC-LOW-01",
+      "title": "Hardcoded Default Cryptographic Secrets & Database Passwords in Configuration",
+      "severity": "LOW",
+      "category": "HARDCODED_CREDENTIALS",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "server/config/index.ts",
+        "docker-compose.yml"
+      ],
+      "affected_components": [
+        "config.sessionSecret",
+        "docker-compose.yml (environment variables)"
+      ],
+      "description": "Default cryptographic secrets and fallback passwords are hardcoded in source files: '<REDACTED_DEFAULT_SESSION_SECRET>' as SESSION_SECRET in config/index.ts, and '<REDACTED_DEFAULT_DB_PASS>' as POSTGRES_PASSWORD in docker-compose.yml. If deployed without setting explicit production environment overrides, default predictable secrets are used.",
+      "prerequisites": "Deployment running without explicit environment variable overrides.",
+      "attack_path": "An attacker uses known repository fallback secrets to attempt database connection or forge session signatures if predictable secrets remain in production.",
+      "evidence": "server/config/index.ts line 41: sessionSecret: process.env.SESSION_SECRET || '<REDACTED_DEFAULT_SESSION_SECRET>' and docker-compose.yml line 17: ${POSTGRES_PASSWORD:-<REDACTED_DEFAULT_DB_PASS>}.",
+      "impact": "Potential credential compromise if operators omit custom secret configuration during deployment.",
+      "exploitability": "LOW",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Environment variable substitution is supported, but defaults allow unconfigured deployment.",
+      "remediation": "Fail closed at startup in production if SESSION_SECRET or POSTGRES_PASSWORD match known default fallbacks.",
+      "architectural_impact": "NONE"
+    },
+    {
+      "id": "SEC-LOW-02",
+      "title": "Client-Side Only Authorization State in Frontend UI Components",
+      "severity": "LOW",
+      "category": "CLIENT_SIDE_SECURITY",
+      "status": "CONFIRMED",
+      "affected_files": [
+        "src/services/authService.ts",
+        "src/services/persistenceService.ts",
+        "src/services/stateContext.tsx"
+      ],
+      "affected_components": [
+        "AuthService.setUserRole",
+        "StateProvider.requestUnlockDoor"
+      ],
+      "description": "In the frontend Command Center application, the active user role is persisted in browser localStorage under key 'campus_persistence_role_v1'. A user can freely modify this value to 'admin'. Furthermore, several interactive actions in stateContext.tsx (such as requestUnlockDoor in simulated mode) update local React state and show success toasts without requiring authoritative backend confirmation.",
+      "prerequisites": "Browser developer tools access on client machine.",
+      "attack_path": "A student user opens DevTools, sets localStorage.setItem('campus_persistence_role_v1', 'admin'), and reloads the console. The frontend UI unlocks administrative menus, device simulation docks, and door release controls.",
+      "evidence": "src/services/authService.ts lines 90-93: const savedRole = persistenceService.loadUserRole() || 'admin'; this.currentUser = this.createSession(savedRole); and src/services/stateContext.tsx lines 1743-1770.",
+      "impact": "False sense of security for operators; client-side UI privilege escalation (though server REST endpoints enforce separate checks if properly secured).",
+      "exploitability": "HIGH",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Backend RBAC checks exist for certain endpoints like POST /api/zones/:id/lockdown.",
+      "remediation": "Derive user role and permissions exclusively from the server-authenticated session token returned by GET /api/auth/me.",
+      "architectural_impact": "LOW"
+    },
+    {
+      "id": "REJ-01",
+      "title": "SQL Injection in PostgreSQL Repository",
+      "severity": "HIGH",
+      "category": "INJECTION",
+      "status": "REJECTED",
+      "affected_files": [
+        "server/db/database.ts"
+      ],
+      "affected_components": [
+        "PostgresRepository"
+      ],
+      "description": "Candidate finding investigated whether user inputs (usernames, incident IDs, device parameters) could trigger SQL injection in PostgresRepository.",
+      "prerequisites": "N/A",
+      "attack_path": "N/A",
+      "evidence": "All queries in PostgresRepository (server/db/database.ts lines 820-1196) strictly use parameterized queries ($1, $2, etc.) through pg.Pool.query. No string concatenation or template literal interpolation of user input exists in SQL execution paths.",
+      "impact": "None. Disproven.",
+      "exploitability": "LOW",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Parameterized SQL queries enforced throughout.",
+      "remediation": "Maintain parameterized query discipline.",
+      "architectural_impact": "NONE"
+    },
+    {
+      "id": "REJ-02",
+      "title": "OS Command Injection in Diagnostics or Camera Stream Probing",
+      "severity": "CRITICAL",
+      "category": "INJECTION",
+      "status": "REJECTED",
+      "affected_files": [
+        "src/components/devices/DeviceDetailModal.tsx",
+        "src/services/cameraTransport.ts"
+      ],
+      "affected_components": [
+        "DeviceDetailModal.handlePingTest",
+        "CameraTransport.probeStream"
+      ],
+      "description": "Candidate finding investigated whether the 'Diagnostic Echo' ping test or camera stream probing executed operating system shell commands.",
+      "prerequisites": "N/A",
+      "attack_path": "N/A",
+      "evidence": "DeviceDetailModal.tsx line 12-14 only displays an informational UI toast. CameraTransport.ts lines 25-78 executes purely in the browser using the DOM Image() object to test image loading. No child_process, exec, spawn, or shell commands are invoked.",
+      "impact": "None. Disproven.",
+      "exploitability": "LOW",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Client-only image-based reachability probing without shell invocation.",
+      "remediation": "Maintain current architecture avoiding shell commands.",
+      "architectural_impact": "NONE"
+    },
+    {
+      "id": "REJ-03",
+      "title": "Path Traversal in Camera Snapshot Retrieval",
+      "severity": "HIGH",
+      "category": "PATH_TRAVERSAL",
+      "status": "REJECTED",
+      "affected_files": [
+        "server/cameras/cctvGateway.ts",
+        "server/api/routes.ts"
+      ],
+      "affected_components": [
+        "ServerCctvGateway.captureSnapshot"
+      ],
+      "description": "Candidate finding investigated whether snapshot URLs allowed directory traversal to access arbitrary system files.",
+      "prerequisites": "N/A",
+      "attack_path": "N/A",
+      "evidence": "Snapshot filenames are generated strictly on the server using 'SNAP_' + cameraId + '_' + Date.now() + '.jpg' in cctvGateway.ts line 183. No user-supplied path strings are used in filesystem read calls.",
+      "impact": "None. Disproven.",
+      "exploitability": "LOW",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Cryptographically deterministic server-generated filenames.",
+      "remediation": "Maintain server-generated naming pattern.",
+      "architectural_impact": "NONE"
+    },
+    {
+      "id": "REJ-04",
+      "title": "Cross-Site Scripting (XSS) via Dynamic Incident Feeds",
+      "severity": "HIGH",
+      "category": "XSS",
+      "status": "REJECTED",
+      "affected_files": [
+        "src/components/incidents/IncidentDetailModal.tsx",
+        "src/components/overview/LiveIncidentStrip.tsx"
+      ],
+      "affected_components": [
+        "IncidentDetailModal",
+        "LiveIncidentStrip"
+      ],
+      "description": "Candidate finding investigated whether incident titles or description payloads injected from the API or MQTT could result in DOM XSS.",
+      "prerequisites": "N/A",
+      "attack_path": "N/A",
+      "evidence": "All incident rendering across React components uses standard JSX string interpolation which auto-escapes HTML entities. A search for 'dangerouslySetInnerHTML' across all component files confirms zero usage in telemetry or incident display views.",
+      "impact": "None. Disproven.",
+      "exploitability": "LOW",
+      "confidence": "CERTAIN",
+      "existing_defenses": "React virtual DOM standard entity escaping.",
+      "remediation": "Continue avoiding dangerouslySetInnerHTML.",
+      "architectural_impact": "NONE"
+    },
+    {
+      "id": "REJ-05",
+      "title": "Biometric Facial Recognition Identity Leakage",
+      "severity": "HIGH",
+      "category": "PRIVACY",
+      "status": "REJECTED",
+      "affected_files": [
+        "src/services/stateContext.tsx",
+        "server/cameras/cctvGateway.ts"
+      ],
+      "affected_components": [
+        "triggerRestrictedMotion",
+        "getSafeCameraList"
+      ],
+      "description": "Candidate finding investigated whether biometric surveillance or facial recognition templates are exposed through camera or sensor feeds.",
+      "prerequisites": "N/A",
+      "attack_path": "N/A",
+      "evidence": "Codebase explicitly enforces architectural exclusion of biometric profiling in stateContext.tsx lines 1234-1236 ('biometricProfiling: EXCLUDED BY POLICY', 'facialRecognition: NOT SUPPORTED'). No facial recognition libraries, models, or data structures exist in the repository.",
+      "impact": "None. Disproven.",
+      "exploitability": "LOW",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Privacy-by-design policy excluding biometric data processing.",
+      "remediation": "Maintain current privacy boundaries.",
+      "architectural_impact": "NONE"
+    },
+    {
+      "id": "HARD-01",
+      "title": "Enforce Non-Root User Execution in Docker Runtime",
+      "severity": "LOW",
+      "category": "CONTAINER_HARDENING",
+      "status": "HARDENING",
+      "affected_files": [
+        "Dockerfile"
+      ],
+      "affected_components": [
+        "runner stage"
+      ],
+      "description": "The runner stage in Dockerfile currently executes as root. Switching to the unprivileged 'node' user provided by node:22-alpine reduces container breakout risk.",
+      "prerequisites": "Container deployment.",
+      "attack_path": "N/A (Defense-in-depth).",
+      "evidence": "Dockerfile line 25: FROM node:22-alpine AS runner (lacks USER node).",
+      "impact": "Reduces potential host impact in the event of an application-level vulnerability.",
+      "exploitability": "LOW",
+      "confidence": "FIRM",
+      "existing_defenses": "Alpine Linux minimal surface.",
+      "remediation": "Add 'USER node' before CMD in Dockerfile.",
+      "architectural_impact": "NONE"
+    },
+    {
+      "id": "HARD-02",
+      "title": "Isolate Sensitive Service Ports from Host Network Interfaces",
+      "severity": "LOW",
+      "category": "NETWORK_HARDENING",
+      "status": "HARDENING",
+      "affected_files": [
+        "docker-compose.yml"
+      ],
+      "affected_components": [
+        "postgres",
+        "mqtt",
+        "media-gateway"
+      ],
+      "description": "In docker-compose.yml, ports 5432, 1883, and 8554 are exposed to all host interfaces. Restricting these services to the internal Docker bridge network prevents unauthorized direct access from outside the host.",
+      "prerequisites": "Container deployment.",
+      "attack_path": "N/A (Defense-in-depth).",
+      "evidence": "docker-compose.yml lines 61, 84, 97.",
+      "impact": "Eliminates direct external exposure of backend support services.",
+      "exploitability": "LOW",
+      "confidence": "FIRM",
+      "existing_defenses": "Bridge network is defined, but ports are published externally.",
+      "remediation": "Remove published 'ports' entries for postgres and mqtt from docker-compose.yml, or bind them to 127.0.0.1.",
+      "architectural_impact": "LOW"
+    },
+    {
+      "id": "HARD-03",
+      "title": "Enforce TLS and Mutual Certificate Authentication on MQTT Broker",
+      "severity": "LOW",
+      "category": "PROTOCOL_HARDENING",
+      "status": "HARDENING",
+      "affected_files": [
+        "docker-compose.yml",
+        "server/mqtt/mqttClient.ts"
+      ],
+      "affected_components": [
+        "mqtt service",
+        "ServerMqttClient"
+      ],
+      "description": "The Mosquitto broker allows plaintext connections on port 1883. Field IoT nodes and backend bridges should communicate exclusively over TLS (port 8883) with client certificates to authenticate physical sensor hardware.",
+      "prerequisites": "Physical field sensor integration.",
+      "attack_path": "N/A (Defense-in-depth).",
+      "evidence": "docker-compose.yml line 84: '1883:1883'.",
+      "impact": "Protects telemetry against passive network eavesdropping and sensor packet spoofing.",
+      "exploitability": "LOW",
+      "confidence": "FIRM",
+      "existing_defenses": "TLS options exist in config/index.ts but are optional.",
+      "remediation": "Disable plaintext port 1883 in production and enforce mTLS with CA verification.",
+      "architectural_impact": "MEDIUM"
+    },
+    {
+      "id": "HARD-04",
+      "title": "Configure Content-Security-Policy (CSP) Response Headers",
+      "severity": "LOW",
+      "category": "WEB_HARDENING",
+      "status": "HARDENING",
+      "affected_files": [
+        "server/api/routes.ts"
+      ],
+      "affected_components": [
+        "sendJson",
+        "handleApiRequest"
+      ],
+      "description": "The API server currently sends Access-Control headers but omits Content-Security-Policy, X-Content-Type-Options: nosniff, and X-Frame-Options headers.",
+      "prerequisites": "Browser interaction.",
+      "attack_path": "N/A (Defense-in-depth).",
+      "evidence": "server/api/routes.ts lines 43-50.",
+      "impact": "Hardens client against clickjacking, MIME-confusion, and unauthorized script execution.",
+      "exploitability": "LOW",
+      "confidence": "FIRM",
+      "existing_defenses": "None configured at application layer.",
+      "remediation": "Add security headers in sendJson and reverse proxy configuration.",
+      "architectural_impact": "NONE"
+    },
+    {
+      "id": "HARD-05",
+      "title": "Implement Strict Anti-CSRF Protection for Stateful REST Endpoints",
+      "severity": "LOW",
+      "category": "WEB_HARDENING",
+      "status": "HARDENING",
+      "affected_files": [
+        "server/api/routes.ts"
+      ],
+      "affected_components": [
+        "handleApiRequest"
+      ],
+      "description": "State mutation endpoints currently rely on Authorization header checking for CSRF defense. While custom headers generally mitigate simple cross-site POSTs, implementing anti-CSRF token verification or SameSite cookie protection strengthens defensive posture.",
+      "prerequisites": "Browser interaction.",
+      "attack_path": "N/A (Defense-in-depth).",
+      "evidence": "server/api/routes.ts lines 89-106.",
+      "impact": "Guarantees cross-origin request forgery immunity across all browser execution environments.",
+      "exploitability": "LOW",
+      "confidence": "FIRM",
+      "existing_defenses": "Bearer tokens in Authorization header cannot be attached automatically by simple HTML forms.",
+      "remediation": "Enforce explicit Origin / Referer validation and anti-CSRF challenge tokens for browser sessions.",
+      "architectural_impact": "NONE"
+    },
+    {
+      "id": "PHYS-01",
+      "title": "Wiegand Physical Bus Unencrypted Wire Sniffing & Replay",
+      "severity": "INFORMATIONAL",
+      "category": "PHYSICAL_LIMITATION",
+      "status": "UNVERIFIABLE_PHYSICAL",
+      "affected_files": [
+        "server/devices/wiegandParser.ts"
+      ],
+      "affected_components": [
+        "Wiegand 26-bit physical bus"
+      ],
+      "description": "The Wiegand 26-bit protocol transmits facility codes and card numbers as unencrypted electrical pulses over Data0 and Data1 wires. An attacker with physical access to the wiring behind the reader can attach a hardware logger to capture and replay valid badge signals. This limitation is inherent to legacy Wiegand hardware and cannot be mitigated purely in software without migrating to OSDP (Open Supervised Device Protocol) with Secure Channel encryption.",
+      "prerequisites": "Physical tampering access to reader wiring.",
+      "attack_path": "Attacker taps D0/D1 physical lines at the door portal, records a legitimate badge swipe, and replays the pulse train to gain physical entry.",
+      "evidence": "Wiegand protocol specification and server/devices/wiegandParser.ts.",
+      "impact": "Physical perimeter breach.",
+      "exploitability": "MEDIUM",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Parity checking exists in software, but parity is predictable and easily replayed.",
+      "remediation": "Deploy OSDP v2 card readers with AES-128 Secure Channel encryption instead of raw Wiegand interfaces.",
+      "architectural_impact": "HIGH"
+    },
+    {
+      "id": "PHYS-02",
+      "title": "Surveillance Camera Physical Network Segmentation (VLAN)",
+      "severity": "INFORMATIONAL",
+      "category": "PHYSICAL_LIMITATION",
+      "status": "UNVERIFIABLE_PHYSICAL",
+      "affected_files": [
+        "server/cameras/cctvGateway.ts"
+      ],
+      "affected_components": [
+        "Physical IP Camera Network"
+      ],
+      "description": "The CCTV gateway references internal RTSP IP addresses in the 10.0.1.0/24 subnet (e.g. 10.0.1.50). Whether physical network switches isolate these cameras onto a dedicated surveillance VLAN with 802.1X port authentication (preventing an attacker from unplugging a camera and plugging in a rogue laptop) is a network infrastructure dependency that cannot be verified from the software repository alone.",
+      "prerequisites": "Physical access to exterior camera cabling.",
+      "attack_path": "Attacker unplugs outdoor camera and connects laptop directly to the camera Ethernet jack.",
+      "evidence": "server/cameras/cctvGateway.ts lines 413-414.",
+      "impact": "Direct access to internal management network.",
+      "exploitability": "MEDIUM",
+      "confidence": "FIRM",
+      "existing_defenses": "Gateway sanitizes playback URLs to clients.",
+      "remediation": "Verify 802.1X port security and MAC locking on all physical camera switchports.",
+      "architectural_impact": "HIGH"
+    },
+    {
+      "id": "PHYS-03",
+      "title": "Fail-Safe vs. Fail-Secure Power Interruption Relay Behavior",
+      "severity": "INFORMATIONAL",
+      "category": "PHYSICAL_LIMITATION",
+      "status": "UNVERIFIABLE_PHYSICAL",
+      "affected_files": [
+        "server/devices/deviceRegistry.ts"
+      ],
+      "affected_components": [
+        "Magnetic Door Relays"
+      ],
+      "description": "The software commands lockStatus to 'locked' or 'unlocked'. However, whether physical door hardware releases (fail-safe, required by life-safety fire codes for emergency exits) or remains bolted (fail-secure, required for high-value vault interlocks) during a power failure depends entirely on physical electrical relay wiring and integration with NFPA 72 fire alarm control panels (FACPs). This cannot be verified from the software codebase.",
+      "prerequisites": "Facility power interruption or physical cut of relay power.",
+      "attack_path": "Attacker cuts building mains power; fail-safe doors unlock automatically.",
+      "evidence": "server/devices/deviceRegistry.ts lines 115-135.",
+      "impact": "Uncontrolled door state during facility electrical outages.",
+      "exploitability": "LOW",
+      "confidence": "CERTAIN",
+      "existing_defenses": "Software tracks online status, but physical circuit determines power-loss state.",
+      "remediation": "Conduct on-site electrical commissioning audit to verify code-compliant relay behavior and battery backup.",
+      "architectural_impact": "HIGH"
+    }
+  ]
+}

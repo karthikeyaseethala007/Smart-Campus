@@ -2,11 +2,12 @@ import React from 'react';
 import { useAppState } from '../services/stateContext';
 import { OverviewHeader } from '../components/overview/OverviewHeader';
 import { HeroOperationsBand } from '../components/overview/HeroOperationsBand';
-import { LiveIncidentStrip } from '../components/overview/LiveIncidentStrip';
+import { LiveOperationalStrip } from '../components/overview/LiveOperationalStrip';
 import { SurveillancePrimaryPanel } from '../components/overview/SurveillancePrimaryPanel';
-import { AccessControlModule } from '../components/overview/AccessControlModule';
-import { SensorNetworkModule } from '../components/overview/SensorNetworkModule';
+import { LiveIncidentStrip } from '../components/overview/LiveIncidentStrip';
 import { CampusPulseGraph } from '../components/overview/CampusPulseGraph';
+import { SensorNetworkModule } from '../components/overview/SensorNetworkModule';
+import { AccessControlModule } from '../components/overview/AccessControlModule';
 import { SecurityCoverageMatrix } from '../components/overview/SecurityCoverageMatrix';
 import { FourSystemPillars } from '../components/overview/FourSystemPillars';
 import { RecentActivityFeed } from '../components/overview/RecentActivityFeed';
@@ -45,10 +46,10 @@ export const OverviewView: React.FC = () => {
         margin: '0 auto',
       }}
     >
-      {/* 01. HEADER: SMART CAMPUS Command Center, Operational Status, Date/Time, RBAC Role, Notifications */}
+      {/* 01. GLOBAL COMMAND HEADER */}
       <OverviewHeader />
 
-      {/* 02. HERO OPERATIONS BAND: CAMPUS COMMAND CENTER + 98.7% SYSTEM HEALTH + 4 STATUS INDICATORS */}
+      {/* 02. COMMAND CENTER INTRO + SYSTEM STATUS */}
       <HeroOperationsBand
         systemHealthPct={systemHealthPct}
         lockedDoorsCount={lockedDoors}
@@ -59,64 +60,38 @@ export const OverviewView: React.FC = () => {
         isEmergency={isEmergency}
       />
 
-      {/* 03. LIVE INCIDENT STRIP: IMMEDIATELY BELOW HERO (CRITICAL / WARNING / RESOLVED) */}
+      {/* 03. LIVE OPERATIONAL STRIP (6 Signals: CCTV, Access, PIR, MQ-2, Energy, IoT) */}
+      <LiveOperationalStrip />
+
+      {/* 04. PRIMARY SURVEILLANCE STAGE */}
+      <SurveillancePrimaryPanel />
+
+      {/* 05. LIVE INCIDENTS & CAMPUS PULSE */}
       <LiveIncidentStrip />
 
-      {/* 04. MAIN OPERATIONS AREA: ASYMMETRIC COMPOSITION (LEFT: CCTV VISUAL, RIGHT: ACCESS & SENSORS) */}
-      <section
-        aria-label="Primary Tactical Operations"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.35fr) minmax(360px, 1fr)',
-          gap: '24px',
-          alignItems: 'stretch',
-        }}
-      >
-        {/* LEFT: Large Primary Surveillance Panel (Main Gate CAM-01) */}
-        <div style={{ minHeight: '440px' }}>
-          <SurveillancePrimaryPanel />
-        </div>
-
-        {/* RIGHT: Stacked Operational Modules (Access Control & Sensor Network) */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px',
-            justifyContent: 'space-between',
-          }}
-        >
-          {/* Module 1: Access Control (128 Authorized Today KPI + 8 attempts / 2 denied / 1 alert) */}
-          <AccessControlModule />
-
-          {/* Module 2: Sensor Network (PIR, MQ-2, Temperature, Energy clean visualization) */}
-          <SensorNetworkModule />
-        </div>
-      </section>
-
-      {/* 05. ENERGY / CAMPUS PULSE: WIDE 24-HOUR TELEMETRY CURVE (54.00 kW vs 54.85 kW) */}
       <CampusPulseGraph />
 
-      {/* 06. SECURITY COVERAGE: 7 CAMPUS ZONES CONNECTED OPERATIONAL MATRIX */}
+      {/* 06. SENSOR INTELLIGENCE & ACCESS CONTROL (Stacked Asymmetric Tactical Grid) */}
+      <section
+        aria-label="Sensor Intelligence and Access Control Workspace"
+        className="tactical-duo-grid"
+      >
+        <SensorNetworkModule />
+        <AccessControlModule />
+      </section>
+
+      {/* 07. CAMPUS ZONES (7 Operational Spatial Nodes Synced with Surveillance) */}
       <SecurityCoverageMatrix />
 
-      {/* 07. FOUR SYSTEM PILLARS: PROTECT, DETECT, RESPOND, AUTOMATE WITH HOVER REVEAL */}
+      {/* 08. FOUR OPERATIONAL PILLARS (Protect, Detect, Respond, Automate) */}
       <FourSystemPillars />
 
-      {/* 08. LOWER OPERATIONS ROW: RECENT ACTIVITY FEED + QUICK ACTIONS COMMAND AREA */}
+      {/* 09. RECENT ACTIVITY STREAM & QUICK ACTIONS COMMAND BAR */}
       <section
-        aria-label="Operational Activity & Quick Command Area"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.4fr) minmax(320px, 1fr)',
-          gap: '24px',
-          alignItems: 'start',
-        }}
+        aria-label="Activity Feed, Audit Trail, and Quick Command Dispatch"
+        className="overview-bottom-grid"
       >
-        {/* Left: Operational Timeline Feed */}
-        <RecentActivityFeed maxItems={5} />
-
-        {/* Right: Minimal Command Dispatch Controls */}
+        <RecentActivityFeed maxItems={6} />
         <QuickCommandBar />
       </section>
     </div>

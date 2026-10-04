@@ -106,6 +106,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
+      className="app-sidebar"
       style={{
         width: '230px',
         backgroundColor: 'var(--color-paper-white)',

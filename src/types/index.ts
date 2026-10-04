@@ -15,7 +15,7 @@ export type DeviceCategory =
 
 export type IncidentSeverity = 'info' | 'warning' | 'critical';
 
-export type IncidentStatus = 'open' | 'acknowledged' | 'resolved';
+export type IncidentStatus = 'open' | 'acknowledged' | 'investigating' | 'resolved';
 
 export type EventSource = 'live' | 'simulation';
 
@@ -38,6 +38,18 @@ export interface IncidentAuditItem {
   action: string;
   actor: string;
   notes?: string;
+}
+
+export interface AuditRecord {
+  id: string;
+  timestamp: string;
+  actor: string;
+  role: UserRole;
+  action: string;
+  target: string;
+  result: 'SUCCESS' | 'DENIED' | 'FAILED' | 'ESCALATED';
+  details: string;
+  zone?: string;
 }
 
 export interface CampusIncident {
@@ -91,6 +103,7 @@ export interface SmartDoor {
   lastEventText: string;
   isSecurityAlert: boolean;
   authorizedRoles: UserRole[];
+  pinHash?: string;
 }
 
 export interface IoTDevice {
@@ -161,4 +174,6 @@ export interface AlarmAudioState {
   isMuted: boolean;
   autoplayBlocked: boolean;
 }
+
+export * from './events';
 

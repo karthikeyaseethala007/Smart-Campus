@@ -1,37 +1,49 @@
-import React, { 
-  createContext, 
-  useContext, 
-  useState, 
-  useMemo, 
-  useEffect, 
-  type ReactNode 
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useMemo,
+  useEffect,
+  type ReactNode
 } from 'react';
-import type { 
-  UserRole, 
-  NavigationTab, 
-  IoTDevice, 
-  CampusAlert, 
-  CampusIncident, 
-  CampusEvent, 
-  ZoneAutomation, 
-  SmartDoor, 
-  CameraFeed, 
+import type {
+  UserRole,
+  NavigationTab,
+  IoTDevice,
+  CampusAlert,
+  CampusIncident,
+  CampusEvent,
+  ZoneAutomation,
+  SmartDoor,
+  CameraFeed,
   CameraStreamState,
   EventSource,
-  ToastMessage 
+  ToastMessage,
+  AuditRecord
 } from '../types';
-import { 
-  INITIAL_DEVICES, 
-  INITIAL_ALERTS, 
-  INITIAL_INCIDENTS, 
-  INITIAL_EVENTS, 
-  INITIAL_AUTOMATIONS, 
-  INITIAL_DOORS, 
-  INITIAL_CAMERAS 
+import {
+  INITIAL_DEVICES,
+  INITIAL_ALERTS,
+  INITIAL_INCIDENTS,
+  INITIAL_EVENTS,
+  INITIAL_AUTOMATIONS,
+  INITIAL_DOORS,
+  INITIAL_CAMERAS,
+  INITIAL_AUDIT_LOG
 } from './mockData';
 import { alarmSoundService } from './alarmSoundService';
 import { DeviceAdapter } from './deviceAdapter';
 import { CameraTransport } from './cameraTransport';
+import { eventBus } from './eventBus';
+import { realtimeGateway, type RealtimeConnectionState, type RealtimeMode } from './realtimeGateway';
+import { healthService, type SubsystemName, type ComponentHealth } from './healthService';
+import { persistenceService } from './persistenceService';
+import { authService, type AuthUser } from './authService';
+import { sensorAdapter } from './adapters/sensorAdapter';
+import { accessWiegandAdapter } from './adapters/accessWiegandAdapter';
+import { cctvMediaAdapter } from './adapters/cctvMediaAdapter';
+import { campusSimulator } from './campusSimulator';
+import type { CampusNormalizedEvent } from '../types/events';
 
 interface ConfirmDialogState {
   isOpen: boolean;
@@ -43,6 +55,12 @@ interface ConfirmDialogState {
 }
 
 interface StateContextType {
+  // Realtime Gateway & Infrastructure Health
+  connectionState: RealtimeConnectionState;
+  realtimeMode: RealtimeMode;
+  systemHealth: Record<SubsystemName, ComponentHealth>;
+  authSession: AuthUser;
+
   // Navigation & Role
   userRole: UserRole;
   setUserRole: (role: UserRole) => void;
@@ -51,14 +69,24 @@ interface StateContextType {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
 
+  // Spatial Zone Context
+  selectedZone: string;
+  setSelectedZone: (zone: string) => void;
+
+  // Surveillance Focus
+  selectedCameraId: string;
+  setSelectedCameraId: (cameraId: string) => void;
+
   // System Status
   campusStatus: 'SECURE' | 'EMERGENCY' | 'WARNING';
   isSimulationActive: boolean;
-  activeSimulations: { 
-    fire: boolean; 
-    smoke: boolean; 
-    breach: boolean; 
-    restrictedMotion: boolean; 
+  isSystemDegraded: boolean;
+  setIsSystemDegraded: (degraded: boolean) => void;
+  activeSimulations: {
+    fire: boolean;
+    smoke: boolean;
+    breach: boolean;
+    restrictedMotion: boolean;
   };
 
   // Core Data Collections
@@ -69,6 +97,7 @@ interface StateContextType {
   automations: ZoneAutomation[];
   doors: SmartDoor[];
   cameras: CameraFeed[];
+  auditLog: AuditRecord[];
 
   // Selected Detail Modals
   selectedIncident: CampusIncident | null;
@@ -81,10 +110,23 @@ interface StateContextType {
   closeConfirmModal: () => void;
   showConfirmModal: (dialog: Omit<ConfirmDialogState, 'isOpen'>) => void;
 
+  // Command Palette
+  isCommandPaletteOpen: boolean;
+  setIsCommandPaletteOpen: (open: boolean) => void;
+
   // Notifications / Toasts
   toasts: ToastMessage[];
   dismissToast: (id: string) => void;
   addToast: (title: string, message: string, type?: ToastMessage['type']) => void;
+
+  // Audit Logging
+  addAuditRecord: (
+    action: string,
+    target: string,
+    result: 'SUCCESS' | 'DENIED' | 'FAILED' | 'ESCALATED',
+    details: string,
+    zone?: string
+  ) => void;
 
   // Alarm Audio
   isAlarmRinging: boolean;
@@ -96,6 +138,8 @@ interface StateContextType {
   // Operational IoT Event Actions
   triggerFireAlert: (location?: string, source?: EventSource) => void;
   triggerSmokeAlert: (location?: string, source?: EventSource) => void;
+  triggerMQ2Elevation: (ppm?: number) => void;
+  resetMQ2Calibration: () => void;
   triggerRestrictedMotion: (zone?: string, source?: EventSource) => void;
   triggerZoneOccupancy: (zoneId: string, source?: EventSource) => void;
   triggerZoneVacancy: (zoneId: string, source?: EventSource) => void;
@@ -103,6 +147,11 @@ interface StateContextType {
   toggleDeviceOnline: (deviceId: string) => void;
   updateCameraStream: (cameraId: string, streamUrl?: string) => Promise<void>;
   setCameraStatus: (cameraId: string, status: CameraStreamState) => void;
+  captureCameraSnapshot: (cameraId: string) => void;
+  ptzCameraAction: (cameraId: string, action: string) => void;
+
+  // High-Security Zone Lockdown
+  lockdownZone: (zoneName: string) => void;
 
   // Simulation Triggers
   simulateFire: () => void;
@@ -118,6 +167,7 @@ interface StateContextType {
   // Incident & Alert Management
   acknowledgeAlert: (alertId: string) => void;
   acknowledgeIncident: (incidentId: string) => void;
+  investigateIncident: (incidentId: string) => void;
   resolveIncident: (incidentId: string) => void;
 
   // Role Permissions
@@ -131,12 +181,17 @@ interface StateContextType {
 const StateContext = createContext<StateContextType | undefined>(undefined);
 
 export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [userRole, setUserRole] = useState<UserRole>('admin');
-  const [activeTab, setActiveTab] = useState<NavigationTab>(() => {
+  const [activeTab, setActiveTabState] = useState<NavigationTab>(() => {
     if (typeof window !== 'undefined') {
       const urlTab = new URLSearchParams(window.location.search).get('tab') as NavigationTab;
       if (urlTab) return urlTab;
       const pathname = window.location.pathname;
+      if (pathname === '/' || pathname === '') return 'landing';
+      if (pathname.startsWith('/app/cameras')) return 'monitoring';
+      if (pathname.startsWith('/app/access')) return 'security';
+      if (pathname.startsWith('/app/sensors')) return 'safety';
+      if (pathname.startsWith('/app/incidents') || pathname.startsWith('/app/audit')) return 'incidents';
+      if (pathname.startsWith('/app/energy')) return 'energy';
       if (pathname === '/app' || pathname.startsWith('/app/')) {
         const sub = pathname.replace(/^\/app\/?/, '').split('/')[0] as NavigationTab;
         return sub || 'overview';
@@ -145,32 +200,540 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return 'landing';
   });
 
+  const setActiveTab = (tab: NavigationTab) => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      let targetPath = '/app';
+      if (tab === 'landing') targetPath = '/';
+      else if (tab === 'overview') targetPath = '/app';
+      else if (tab === 'monitoring') targetPath = '/app/cameras';
+      else if (tab === 'security') targetPath = '/app/access';
+      else if (tab === 'safety') targetPath = '/app/sensors';
+      else if (tab === 'incidents') targetPath = '/app/incidents';
+      else if (tab === 'energy') targetPath = '/app/energy';
+      else targetPath = `/app?tab=${tab}`;
+
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState(null, '', targetPath);
+      }
+    }
+  };
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handlePopState = () => {
       const urlTab = new URLSearchParams(window.location.search).get('tab') as NavigationTab;
       if (urlTab) {
-        setActiveTab(urlTab);
-      } else if (window.location.pathname === '/app' || window.location.pathname.startsWith('/app/')) {
-        const sub = window.location.pathname.replace(/^\/app\/?/, '').split('/')[0] as NavigationTab;
-        setActiveTab(sub || 'overview');
+        setActiveTabState(urlTab);
       } else {
-        setActiveTab('landing');
+        const pathname = window.location.pathname;
+        if (pathname === '/' || pathname === '') setActiveTabState('landing');
+        else if (pathname.startsWith('/app/cameras')) setActiveTabState('monitoring');
+        else if (pathname.startsWith('/app/access')) setActiveTabState('security');
+        else if (pathname.startsWith('/app/sensors')) setActiveTabState('safety');
+        else if (pathname.startsWith('/app/incidents') || pathname.startsWith('/app/audit')) setActiveTabState('incidents');
+        else if (pathname.startsWith('/app/energy')) setActiveTabState('energy');
+        else if (pathname.startsWith('/app')) setActiveTabState('overview');
+        else setActiveTabState('landing');
       }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Domain Collections
+  // Spatial Zone & Camera Focus
+  const [selectedZone, setSelectedZone] = useState<string>('all');
+  const [selectedCameraId, setSelectedCameraId] = useState<string>('CAM-01');
+
+  // Command Palette & System Health States
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isSystemDegraded, setIsSystemDegraded] = useState(false);
+
+  // Global Structured Audit Trail & Session
+  const [userRole, setUserRoleState] = useState<UserRole>(() => persistenceService.loadUserRole() || 'admin');
+  const [authSession, setAuthSession] = useState<AuthUser>(() => authService.getCurrentUser());
+  const [auditLog, setAuditLog] = useState<AuditRecord[]>(() => persistenceService.loadAuditLog() || INITIAL_AUDIT_LOG);
+
+  // Realtime Gateway & Subsystems Health
+  const [connectionState, setConnectionState] = useState<RealtimeConnectionState>(realtimeGateway.getConnectionState());
+  const [realtimeMode, setRealtimeMode] = useState<RealtimeMode>(realtimeGateway.getMode());
+  const [systemHealth, setSystemHealth] = useState<Record<SubsystemName, ComponentHealth>>(() => healthService.getSnapshot());
+
+  // Domain Collections with Persistence Fallback
   const [devices, setDevices] = useState<IoTDevice[]>(INITIAL_DEVICES);
   const [alerts, setAlerts] = useState<CampusAlert[]>(INITIAL_ALERTS);
-  const [incidents, setIncidents] = useState<CampusIncident[]>(INITIAL_INCIDENTS);
-  const [events, setEvents] = useState<CampusEvent[]>(INITIAL_EVENTS);
+  const [incidents, setIncidents] = useState<CampusIncident[]>(() => persistenceService.loadIncidents() || INITIAL_INCIDENTS);
+  const [events, setEvents] = useState<CampusEvent[]>(() => persistenceService.loadEvents() || INITIAL_EVENTS);
   const [automations, setAutomations] = useState<ZoneAutomation[]>(INITIAL_AUTOMATIONS);
   const [doors, setDoors] = useState<SmartDoor[]>(INITIAL_DOORS);
   const [cameras, setCameras] = useState<CameraFeed[]>(INITIAL_CAMERAS);
+
+  // Keyboard shortcut for ⌘K / Ctrl+K Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Sync to Persistence Layer
+  useEffect(() => {
+    persistenceService.saveIncidents(incidents);
+  }, [incidents]);
+
+  useEffect(() => {
+    persistenceService.saveAuditLog(auditLog);
+  }, [auditLog]);
+
+  useEffect(() => {
+    persistenceService.saveEvents(events);
+  }, [events]);
+
+  // Connect to Realtime Gateway & Health Observability
+  useEffect(() => {
+    realtimeGateway.connect();
+    const unsubGateway = realtimeGateway.subscribe((state, meta) => {
+      setConnectionState(state);
+      setRealtimeMode(meta.mode);
+      if (state === 'DEGRADED') {
+        setIsSystemDegraded(true);
+      } else if (state === 'CONNECTED') {
+        setIsSystemDegraded(false);
+      }
+    });
+
+    const unsubHealth = healthService.subscribe((snap) => {
+      setSystemHealth(snap);
+    });
+
+    return () => {
+      unsubGateway();
+      unsubHealth();
+    };
+  }, []);
+
+  // Manage Simulator Lifecycle Behind Central Event Bus
+  useEffect(() => {
+    if (isSystemDegraded) {
+      campusSimulator.stopBackgroundSimulation();
+      return;
+    }
+    campusSimulator.startBackgroundSimulation();
+    const unsubSim = campusSimulator.subscribe((active) => {
+      setActiveSimulations(active);
+    });
+    return () => {
+      campusSimulator.stopBackgroundSimulation();
+      unsubSim();
+    };
+  }, [isSystemDegraded]);
+
+  // Central Event Bus Subscription: Handles all normalized campus events
+  useEffect(() => {
+    const unsubBus = eventBus.subscribe('*', (event: CampusNormalizedEvent) => {
+      switch (event.type) {
+        case 'MQ2_READING': {
+          const { ppm, status, sensorId } = event.payload;
+          setDevices((prev) =>
+            prev.map((dev) => {
+              if (
+                dev.id === sensorId ||
+                (dev.location.includes('Lab 204') && (dev.category === 'smoke' || dev.category === 'fan'))
+              ) {
+                return {
+                  ...dev,
+                  status: status === 'CRITICAL' ? 'critical' : status === 'ELEVATED' ? 'warning' : 'online',
+                  lastUpdated: 'Just now',
+                };
+              }
+              return dev;
+            })
+          );
+
+          setAutomations((prev) =>
+            prev.map((z) => {
+              if (z.id === 'ZONE-SCI-204') {
+                return {
+                  ...z,
+                  fansState: status === 'NORMAL' ? 'on' : 'off',
+                  currentPowerKw: status === 'NORMAL' ? 1.8 : 1.1,
+                };
+              }
+              return z;
+            })
+          );
+
+          if (status !== 'NORMAL') {
+            const incId = 'INC-GAS-003';
+            const location = 'Science Block · Lab 204';
+            const zoneName = 'Science & Physics Lab';
+            const incident: CampusIncident = {
+              id: incId,
+              event: 'MQ-2 Gas Sensor Elevated',
+              location,
+              zone: zoneName,
+              severity: status === 'CRITICAL' ? 'critical' : 'warning',
+              source: event.source === 'simulation' ? 'simulation' : 'live',
+              status: 'open',
+              timestamp: event.timestamp,
+              description: `Electrochemical MQ-2 sensor detected ${ppm} ppm (safety limit: 500 ppm). Automated dampers sealed to isolate corridor ventilation.`,
+              telemetry: {
+                'Sensor Type': 'MQ-2 Solid-State Chemiresistor',
+                'Concentration': `${ppm} ppm`,
+                'Safety Limit': '500 ppm',
+                'Damper State': 'ISOLATED',
+              },
+              auditTimeline: [
+                {
+                  time: event.timestamp,
+                  action: `Sensor threshold violation detected (${ppm} ppm). Isolation relay energized.`,
+                  actor: 'SAFETY CONTROLLER',
+                },
+              ],
+            };
+            setIncidents((prev) => [incident, ...prev.filter((i) => i.id !== incId)]);
+
+            const alert: CampusAlert = {
+              id: 'ALT-GAS-003',
+              title: 'MQ-2 Gas Concentration Elevated',
+              location,
+              timestamp: event.timestamp,
+              severity: status === 'CRITICAL' ? 'critical' : 'warning',
+              source: event.source === 'simulation' ? 'simulation' : 'live',
+              details: `MQ-2 electrochemical sensor verified ${ppm} ppm in ${location}. Hazard protocol engaged.`,
+              incidentId: incId,
+              acknowledged: false,
+            };
+            setAlerts((prev) => [alert, ...prev.filter((a) => a.id !== alert.id)]);
+          } else {
+            setIncidents((prev) =>
+              prev.map((inc) => {
+                if (inc.id === 'INC-GAS-003' && inc.status !== 'resolved') {
+                  return {
+                    ...inc,
+                    status: 'resolved',
+                    resolvedAt: event.timestamp,
+                    auditTimeline: [
+                      ...inc.auditTimeline,
+                      {
+                        time: event.timestamp,
+                        action: `MQ-2 stabilized at ${ppm} ppm. Baseline restored.`,
+                        actor: 'ENVIRONMENTAL CONTROLLER',
+                      },
+                    ],
+                  };
+                }
+                return inc;
+              })
+            );
+            setAlerts((prev) => prev.filter((a) => a.id !== 'ALT-GAS-003' && !a.title.includes('MQ-2')));
+          }
+          break;
+        }
+
+        case 'ENERGY_DEMAND': {
+          const { zoneId, currentPowerKw } = event.payload;
+          setAutomations((prev) =>
+            prev.map((z) => {
+              if (z.zoneName === zoneId || z.id === zoneId) {
+                return { ...z, currentPowerKw };
+              }
+              return z;
+            })
+          );
+          break;
+        }
+
+        case 'ACCESS_GRANTED': {
+          const { doorId, cardholder } = event.payload;
+          setDoors((prev) =>
+            prev.map((d) => {
+              if (d.id === doorId) {
+                return {
+                  ...d,
+                  lockStatus: 'unlocked',
+                  lastEventTime: event.timestamp,
+                  lastEventText: `Access Granted: ${cardholder}`,
+                  failedAttempts: 0,
+                  isSecurityAlert: false,
+                };
+              }
+              return d;
+            })
+          );
+          setTimeout(() => {
+            setDoors((prev) => (prev.map((d) => (d.id === doorId ? { ...d, lockStatus: 'locked' } : d))));
+          }, 8000);
+          break;
+        }
+
+        case 'ACCESS_DENIED': {
+          const { doorId, reason, failedAttempts } = event.payload;
+          setDoors((prev) =>
+            prev.map((d) => {
+              if (d.id === doorId) {
+                return {
+                  ...d,
+                  failedAttempts,
+                  lastEventTime: event.timestamp,
+                  lastEventText: `Access Denied: ${reason}`,
+                };
+              }
+              return d;
+            })
+          );
+          break;
+        }
+
+        case 'ACCESS_LOCKOUT': {
+          const { doorId, consecutiveFailures, durationSeconds } = event.payload;
+          setDoors((prev) =>
+            prev.map((d) => {
+              if (d.id === doorId) {
+                return {
+                  ...d,
+                  lockStatus: 'locked',
+                  keypadStatus: 'alert',
+                  isSecurityAlert: true,
+                  failedAttempts: consecutiveFailures,
+                  lastEventTime: event.timestamp,
+                  lastEventText: `LOCKOUT: ${consecutiveFailures} violations (${durationSeconds}s)`,
+                };
+              }
+              return d;
+            })
+          );
+
+          const alert: CampusAlert = {
+            id: `ALT-LOCKOUT-${doorId}`,
+            title: 'Keypad Tamper Lockout Active',
+            location: doorId,
+            timestamp: event.timestamp,
+            severity: 'critical',
+            source: event.source === 'simulation' ? 'simulation' : 'live',
+            details: `3 consecutive failed PIN attempts on ${doorId}. Electronic portal locked down.`,
+            doorId,
+            acknowledged: false,
+          };
+          setAlerts((prev) => [alert, ...prev.filter((a) => a.id !== alert.id)]);
+          break;
+        }
+
+        case 'ACCESS_OVERRIDE': {
+          const { doorId, state, actor } = event.payload;
+          setDoors((prev) =>
+            prev.map((d) => {
+              if (d.id === doorId) {
+                return {
+                  ...d,
+                  lockStatus: state,
+                  lastEventTime: event.timestamp,
+                  lastEventText: `Manual Override to ${state.toUpperCase()} by ${actor}`,
+                  isSecurityAlert: false,
+                };
+              }
+              return d;
+            })
+          );
+          break;
+        }
+
+        case 'CAMERA_STREAM_STATE': {
+          const { cameraId, status } = event.payload;
+          setCameras((prev) =>
+            prev.map((c) => {
+              if (c.id === cameraId) {
+                return {
+                  ...c,
+                  status: status === 'offline' ? 'offline' : status === 'degraded' ? 'simulation' : 'live',
+                };
+              }
+              return c;
+            })
+          );
+          break;
+        }
+
+        case 'INCIDENT_DETECTED': {
+          const { incidentId, title, zone, severity, details, telemetry } = event.payload;
+          const newInc: CampusIncident = {
+            id: incidentId,
+            event: title,
+            location: zone,
+            zone,
+            severity,
+            source: event.source === 'simulation' ? 'simulation' : 'live',
+            status: 'open',
+            timestamp: event.timestamp,
+            description: details,
+            telemetry,
+            auditTimeline: [
+              {
+                time: event.timestamp,
+                action: `Incident registered on campus event bus: ${title}`,
+                actor: 'AUTOMATED BUS',
+              },
+            ],
+          };
+          setIncidents((prev) => [newInc, ...prev.filter((i) => i.id !== incidentId)]);
+
+          const alert: CampusAlert = {
+            id: `ALT-${incidentId}`,
+            title,
+            location: zone,
+            timestamp: event.timestamp,
+            severity,
+            source: event.source === 'simulation' ? 'simulation' : 'live',
+            details,
+            incidentId,
+            acknowledged: false,
+          };
+          setAlerts((prev) => [alert, ...prev.filter((a) => a.id !== alert.id)]);
+          break;
+        }
+
+        case 'INCIDENT_ACKNOWLEDGED': {
+          const { incidentId, actor } = event.payload;
+          setIncidents((prev) =>
+            prev.map((inc) => {
+              if (inc.id === incidentId) {
+                return {
+                  ...inc,
+                  status: 'acknowledged',
+                  auditTimeline: [
+                    ...inc.auditTimeline,
+                    { time: event.timestamp, action: 'Acknowledged and queued for dispatch', actor },
+                  ],
+                };
+              }
+              return inc;
+            })
+          );
+          setAlerts((prev) => prev.map((a) => (a.incidentId === incidentId ? { ...a, acknowledged: true } : a)));
+          break;
+        }
+
+        case 'INCIDENT_INVESTIGATING': {
+          const { incidentId, actor } = event.payload;
+          setIncidents((prev) =>
+            prev.map((inc) => {
+              if (inc.id === incidentId) {
+                return {
+                  ...inc,
+                  status: 'investigating',
+                  assignedOfficer: actor,
+                  auditTimeline: [
+                    ...inc.auditTimeline,
+                    { time: event.timestamp, action: `Field investigation dispatched by ${actor}`, actor },
+                  ],
+                };
+              }
+              return inc;
+            })
+          );
+          break;
+        }
+
+        case 'INCIDENT_RESOLVED': {
+          const { incidentId, actor, resolutionNotes } = event.payload;
+          setIncidents((prev) =>
+            prev.map((inc) => {
+              if (incidentId === 'ALL-SIMULATIONS' || inc.id === incidentId) {
+                return {
+                  ...inc,
+                  status: 'resolved',
+                  resolvedAt: event.timestamp,
+                  auditTimeline: [
+                    ...inc.auditTimeline,
+                    {
+                      time: event.timestamp,
+                      action: resolutionNotes || `Hazard mitigated and sealed by ${actor}`,
+                      actor,
+                    },
+                  ],
+                };
+              }
+              return inc;
+            })
+          );
+          if (incidentId === 'ALL-SIMULATIONS') {
+            setAlerts((prev) => prev.filter((a) => a.source !== 'simulation'));
+          } else {
+            setAlerts((prev) => prev.filter((a) => a.incidentId !== incidentId));
+          }
+          break;
+        }
+
+        case 'ZONE_LOCKDOWN': {
+          const { zoneName, action, actor } = event.payload;
+          setDoors((prev) =>
+            prev.map((d) => {
+              if (
+                d.zone.toLowerCase().includes(zoneName.toLowerCase()) ||
+                d.building.toLowerCase().includes(zoneName.toLowerCase())
+              ) {
+                return {
+                  ...d,
+                  lockStatus: action === 'LOCKDOWN' ? 'locked' : 'unlocked',
+                  keypadStatus: action === 'LOCKDOWN' ? 'alert' : 'normal',
+                  isSecurityAlert: action === 'LOCKDOWN',
+                  lastEventTime: event.timestamp,
+                  lastEventText: `Zone ${action} by ${actor}`,
+                };
+              }
+              return d;
+            })
+          );
+          break;
+        }
+
+        case 'AUDIT_RECORD': {
+          const { record } = event.payload;
+          setAuditLog((prev) => [record, ...prev.slice(0, 199)]);
+          break;
+        }
+      }
+    });
+
+    return () => {
+      unsubBus();
+    };
+  }, []);
+
+  const addAuditRecord = (
+    action: string,
+    target: string,
+    result: 'SUCCESS' | 'DENIED' | 'FAILED' | 'ESCALATED',
+    details: string,
+    zone?: string
+  ) => {
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const record: AuditRecord = {
+      id: 'AUD-' + Date.now().toString().slice(-4) + Math.random().toString(36).slice(2, 4).toUpperCase(),
+      timestamp: timeStr,
+      actor: userRole === 'admin' ? 'CHIEF OPERATOR (ADMIN)' : userRole === 'security_officer' ? 'SECURITY OFFICER ON DUTY' : userRole.toUpperCase(),
+      role: userRole,
+      action,
+      target,
+      result,
+      details,
+      zone: zone || (selectedZone !== 'all' ? selectedZone : 'Operations Console')
+    };
+    setAuditLog(prev => [record, ...prev.slice(0, 199)]);
+  };
+
+  const setUserRole = (role: UserRole) => {
+    setUserRoleState(role);
+    const session = authService.setUserRole(role);
+    setAuthSession(session);
+    addAuditRecord('ROLE_CLEARANCE_CHANGED', 'Console Session', 'SUCCESS', `Clearance updated to ${role.toUpperCase()} (${session.clearanceLevel})`);
+  };
 
   // Audio Alarm State
   const [alarmState, setAlarmState] = useState(alarmSoundService.getState());
@@ -182,11 +745,11 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   // Simulation Tracking
-  const [activeSimulations, setActiveSimulations] = useState({ 
-    fire: false, 
-    smoke: false, 
-    breach: false, 
-    restrictedMotion: false 
+  const [activeSimulations, setActiveSimulations] = useState({
+    fire: false,
+    smoke: false,
+    breach: false,
+    restrictedMotion: false
   });
 
   // Dialogs & Modals
@@ -195,17 +758,17 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [confirmModal, setConfirmModal] = useState<ConfirmDialogState | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // Computed Role Permissions
-  const canManageDoors = userRole === 'admin' || userRole === 'security_officer';
-  const canManageIncidents = userRole === 'admin' || userRole === 'security_officer';
-  const canRunSimulations = userRole === 'admin' || userRole === 'security_officer';
-  const canManageDevices = userRole === 'admin';
+  // Computed Role Permissions via Centralized AuthService
+  const canManageDoors = authService.can('ACCESS_OVERRIDE') || userRole === 'admin' || userRole === 'security_officer';
+  const canManageIncidents = authService.can('ACKNOWLEDGE_INCIDENT');
+  const canRunSimulations = authService.can('RUN_SIMULATION');
+  const canManageDevices = authService.can('MANAGE_DEVICES');
   const canAccessSystemSettings = userRole === 'admin';
 
-  const isSimulationActive = 
-    activeSimulations.fire || 
-    activeSimulations.smoke || 
-    activeSimulations.breach || 
+  const isSimulationActive =
+    activeSimulations.fire ||
+    activeSimulations.smoke ||
+    activeSimulations.breach ||
     activeSimulations.restrictedMotion ||
     alerts.some(a => a.source === 'simulation');
 
@@ -215,8 +778,8 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const hasCritical = alerts.some(a => a.severity === 'critical' && !a.acknowledged);
     if (hasCritical) return 'EMERGENCY';
     if (
-      activeSimulations.breach || 
-      activeSimulations.restrictedMotion || 
+      activeSimulations.breach ||
+      activeSimulations.restrictedMotion ||
       alerts.some(a => a.severity === 'warning' && !a.acknowledged)
     ) {
       return 'WARNING';
@@ -262,6 +825,272 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     addToast('Alarm Silenced', 'Audible alert muted. Emergency state remains active in safety log.', 'info');
   };
 
+  // Operational Action: Trigger MQ-2 Gas Elevation
+  const triggerMQ2Elevation = (ppm = 640) => {
+    sensorAdapter.processMQ2Reading('DEV-SMK-204', ppm, 'live');
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const location = 'Science Block · Lab 204';
+    const zoneName = 'Science & Physics Lab';
+
+    setDevices((prev) =>
+      prev.map((dev) => {
+        if (dev.location.includes('Lab 204') && (dev.category === 'smoke' || dev.category === 'fan')) {
+          return {
+            ...dev,
+            status: ppm >= 750 ? 'critical' : 'warning',
+            lastUpdated: 'Just now',
+          };
+        }
+        return dev;
+      })
+    );
+
+    setAutomations((prev) =>
+      prev.map((z) => {
+        if (z.id === 'ZONE-SCI-204') {
+          return { ...z, fansState: 'off', currentPowerKw: 1.1 };
+        }
+        return z;
+      })
+    );
+
+    const normEvt = DeviceAdapter.buildEvent(
+      'MQ-2 Gas Concentration Elevated',
+      location,
+      'DEV-SMK-204',
+      ppm >= 750 ? 'critical' : 'warning',
+      'live',
+      {
+        mq2ReadingPpm: ppm,
+        thresholdPpm: 500,
+        trend: '+28% spike',
+        ventilationStatus: 'AUTOMATED DAMPER ISOLATION',
+      }
+    );
+
+    const campusEvt = DeviceAdapter.toCampusEvent(
+      normEvt,
+      `MQ-2 reached ${ppm} ppm · Automated damper closed · Extraction active`
+    );
+    setEvents((prev) => [campusEvt, ...prev]);
+
+    const alert = DeviceAdapter.toCampusAlert(
+      normEvt,
+      `MQ-2 electrochemical sensor verified ${ppm} ppm in ${location}. Hazard protocol engaged.`,
+      'INC-GAS-003'
+    );
+    setAlerts((prev) => [alert, ...prev.filter((a) => a.id !== alert.id)]);
+
+    const incident: CampusIncident = {
+      id: 'INC-GAS-003',
+      event: 'MQ-2 Gas Sensor Elevated',
+      location,
+      zone: zoneName,
+      severity: ppm >= 750 ? 'critical' : 'warning',
+      source: 'live',
+      status: 'open',
+      timestamp: timeStr,
+      description: `Electrochemical MQ-2 sensor detected ${ppm} ppm (safety limit: 500 ppm). Automated dampers sealed to isolate corridor ventilation.`,
+      telemetry: {
+        'Sensor Type': 'MQ-2 Solid-State Chemiresistor',
+        'Concentration': `${ppm} ppm`,
+        'Safety Limit': '500 ppm',
+        'Damper State': 'ISOLATED',
+      },
+      auditTimeline: [
+        {
+          time: timeStr,
+          action: `Sensor threshold violation detected (${ppm} ppm). Isolation relay energized.`,
+          actor: 'SAFETY CONTROLLER',
+        },
+      ],
+    };
+    setIncidents((prev) => [incident, ...prev.filter((i) => i.id !== 'INC-GAS-003')]);
+
+    addAuditRecord(
+      'SENSOR_ELEVATION_DETECTED',
+      'DEV-SMK-204 (Science Lab 204)',
+      'ESCALATED',
+      `MQ-2 reading exceeded safe threshold (${ppm} ppm vs 500 ppm). Damper isolation initiated.`,
+      zoneName
+    );
+
+    addToast(
+      'Hazard Alert: Gas Elevated',
+      `MQ-2 sensor reached ${ppm} ppm in ${location}. Automated containment active.`,
+      ppm >= 750 ? 'error' : 'warning'
+    );
+  };
+
+  // Operational Action: Reset MQ-2 Calibration to Baseline
+  const resetMQ2Calibration = () => {
+    sensorAdapter.processMQ2Reading('DEV-SMK-204', 312, 'live');
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const location = 'Science Block · Lab 204';
+    const zoneName = 'Science & Physics Lab';
+
+    setDevices((prev) =>
+      prev.map((dev) => {
+        if (dev.location.includes('Lab 204') && (dev.category === 'smoke' || dev.category === 'fan')) {
+          return {
+            ...dev,
+            status: 'online',
+            lastUpdated: 'Just now',
+          };
+        }
+        return dev;
+      })
+    );
+
+    setAutomations((prev) =>
+      prev.map((z) => {
+        if (z.id === 'ZONE-SCI-204') {
+          return { ...z, fansState: 'on', currentPowerKw: 1.8 };
+        }
+        return z;
+      })
+    );
+
+    setIncidents((prev) =>
+      prev.map((inc) =>
+        inc.id === 'INC-GAS-003'
+          ? {
+              ...inc,
+              status: 'resolved',
+              resolvedAt: timeStr,
+              auditTimeline: [
+                ...inc.auditTimeline,
+                { time: timeStr, action: 'MQ-2 concentration dropped below threshold (312 ppm). Baseline restored.', actor: 'ENVIRONMENTAL SUPERVISOR' },
+              ],
+            }
+          : inc
+      )
+    );
+
+    setAlerts((prev) => prev.filter((a) => a.id !== 'INC-GAS-003' && !a.title.includes('MQ-2')));
+
+    addAuditRecord(
+      'SENSOR_CALIBRATION_RESET',
+      `DEV-SMK-204 (${location})`,
+      'SUCCESS',
+      'MQ-2 solid-state sensor recalibrated to baseline 312 ppm. Isolation damper reset to open.',
+      zoneName
+    );
+
+    addToast('MQ-2 Normalized', 'Science Lab 204 gas reading stabilized at 312 ppm.', 'info');
+  };
+
+  // Operational Action: High-Security Zone Lockdown
+  const lockdownZone = (zoneName: string) => {
+    if (!canManageDoors) {
+      addToast('Permission Denied', 'Your current role does not have authorization to trigger zone lockdowns.', 'error');
+      addAuditRecord('ZONE_LOCKDOWN_REJECTED', zoneName, 'DENIED', 'Clearance level insufficient for lockdown dispatch', zoneName);
+      return;
+    }
+
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    setDoors((prev) =>
+      prev.map((d) => {
+        if (d.zone.toLowerCase().includes(zoneName.toLowerCase()) || d.building.toLowerCase().includes(zoneName.toLowerCase())) {
+          return {
+            ...d,
+            lockStatus: 'locked',
+            keypadStatus: 'alert',
+            isSecurityAlert: true,
+            lastEventTime: timeStr,
+            lastEventText: `Emergency lockdown initiated by ${userRole.toUpperCase()}`,
+          };
+        }
+        return d;
+      })
+    );
+
+    const lockEvt = DeviceAdapter.buildEvent(
+      'Zone Lockdown Engaged',
+      zoneName,
+      'SYS-LOCKDOWN',
+      'critical',
+      'live',
+      {
+        operatorRole: userRole,
+        protocol: 'HIGH_SECURITY_INTERLOCK',
+        holdingForce: '1200 lb',
+      }
+    );
+
+    const campusEvt = DeviceAdapter.toCampusEvent(lockEvt, `Perimeter locked down by ${userRole.toUpperCase()} · Keypads locked out`);
+    setEvents((prev) => [campusEvt, ...prev]);
+
+    const alert = DeviceAdapter.toCampusAlert(
+      lockEvt,
+      `Emergency lockdown active for ${zoneName}. Access suspended.`,
+      `INC-LOCK-${Date.now().toString().slice(-4)}`
+    );
+    setAlerts((prev) => [alert, ...prev]);
+
+    addAuditRecord(
+      'ZONE_LOCKDOWN_ENGAGED',
+      zoneName,
+      'SUCCESS',
+      `Perimeter magnetic interlocks energized (1200 lb holding force). Credential readers set to lockdown by ${userRole.toUpperCase()}.`,
+      zoneName
+    );
+
+    addToast('ZONE LOCKDOWN ACTIVE', `High-security lockdown engaged for ${zoneName}. All portals locked.`, 'error');
+  };
+
+  // Operational Action: Optical Camera Snapshot
+  const captureCameraSnapshot = (cameraId: string) => {
+    cctvMediaAdapter.captureSnapshot(cameraId);
+    const cam = cameras.find((c) => c.id === cameraId) || cameras[0];
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    setEvents((prev) => [
+      {
+        id: 'EVT-SNAP-' + Date.now(),
+        time: timeStr,
+        eventType: 'CCTV Frame Captured',
+        location: cam.location,
+        resultingAction: 'High-res security snapshot archived to evidence vault',
+        severity: 'info',
+        source: 'live',
+      },
+      ...prev,
+    ]);
+
+    addAuditRecord(
+      'CCTV_FRAME_ARCHIVE',
+      `${cam.id} (${cam.name})`,
+      'SUCCESS',
+      `Optical frame at 1080p captured by ${userRole.toUpperCase()} and cryptographic hash signed.`,
+      cam.zone
+    );
+
+    addToast('Snapshot Archived', `Cryptographically signed frame from ${cam.name} saved to audit ledger.`, 'success');
+  };
+
+  // Operational Action: PTZ Camera Control
+  const ptzCameraAction = (cameraId: string, action: string) => {
+    cctvMediaAdapter.executePtzAction(cameraId, action as any);
+    const cam = cameras.find((c) => c.id === cameraId);
+    if (!cam) return;
+    if (!cam.ptzCapable) {
+      addToast('PTZ Unsupported', `${cam.name} is a fixed wide-angle dome and does not support optical pan/tilt.`, 'warning');
+      return;
+    }
+
+    addAuditRecord(
+      `PTZ_${action}`,
+      `${cam.id} (${cam.name})`,
+      'SUCCESS',
+      `Servo command ${action} executed by ${userRole.toUpperCase()}.`,
+      cam.zone
+    );
+
+    addToast('PTZ Command Transmitted', `${action.replace('_', ' ')} command sent to ${cam.name}.`, 'info');
+  };
+
   // =========================================================================
   // 1. FIRE & SMOKE OPERATIONAL PIPELINE
   // =========================================================================
@@ -269,10 +1098,10 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // 1. SENSE: Sensor abnormal obscuration
     setDevices(prev => prev.map(dev => {
       if (dev.location.includes('Lab 204') && (dev.category === 'smoke' || dev.category === 'fan')) {
-        return { 
-          ...dev, 
-          status: dev.category === 'smoke' ? 'critical' : 'warning', 
-          lastUpdated: 'Just now' 
+        return {
+          ...dev,
+          status: dev.category === 'smoke' ? 'critical' : 'warning',
+          lastUpdated: 'Just now'
         };
       }
       return dev;
@@ -538,10 +1367,11 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // 4. KEYPAD AUTHENTICATION & ACCESS CONTROL
   // =========================================================================
   const submitKeypadPin = async (
-    doorId: string, 
-    pin: string, 
+    doorId: string,
+    pin: string,
     source: EventSource = 'live'
   ): Promise<{ success: boolean; message: string }> => {
+    void accessWiegandAdapter.processPinEntry(doorId, pin, source);
     const door = doors.find(d => d.id === doorId);
     if (!door) return { success: false, message: 'Portal not found' };
 
@@ -584,6 +1414,14 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const campusEvt = DeviceAdapter.toCampusEvent(normEvt, 'Authorized credential accepted');
       setEvents(prev => [campusEvt, ...prev]);
 
+      addAuditRecord(
+        'PIN_AUTH_SUCCESS',
+        `${door.id} (${door.name})`,
+        'SUCCESS',
+        'Authorized PIN credential accepted. Solenoid released for 8s.',
+        door.zone
+      );
+
       addToast('Access Granted', `Authorized credential accepted at ${door.name}.`, 'success');
       return { success: true, message: 'Authorized credential accepted' };
     } else {
@@ -600,16 +1438,16 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             failedAttempts: nextFailures,
             isSecurityAlert: isLockout,
             lastEventTime: timeStr,
-            lastEventText: isLockout 
-              ? `3 failed keypad attempts · Auto-lock held` 
+            lastEventText: isLockout
+              ? `3 failed keypad attempts · Auto-lock held`
               : `Access denied · Invalid PIN attempt (${nextFailures}/3)`
           };
         }
         return d;
       }));
 
-      const actionText = isLockout 
-        ? 'Repeated access failure (3/3) · Auto-lock held · Keypad locked out' 
+      const actionText = isLockout
+        ? 'Repeated access failure (3/3) · Auto-lock held · Keypad locked out'
         : `Door held locked · Keypad attempt rejected (${nextFailures}/3)`;
 
       const denyEvt = DeviceAdapter.buildEvent(
@@ -623,6 +1461,14 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       const campusEvt = DeviceAdapter.toCampusEvent(denyEvt, actionText);
       setEvents(prev => [campusEvt, ...prev]);
+
+      addAuditRecord(
+        'PIN_AUTH_FAILURE',
+        `${door.id} (${door.name})`,
+        isLockout ? 'ESCALATED' : 'DENIED',
+        isLockout ? '3 consecutive PIN failures. High-security anti-tamper magnetic lockout engaged.' : `Invalid PIN attempt (${nextFailures}/3).`,
+        door.zone
+      );
 
       if (isLockout) {
         const breachAlert = DeviceAdapter.toCampusAlert(
@@ -648,9 +1494,9 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         addToast('Access Denied', `Invalid PIN entered at ${door.name}. Attempt ${nextFailures} of 3.`, 'warning');
       }
 
-      return { 
-        success: false, 
-        message: isLockout ? 'Repeated access failure · Lockout active' : 'Invalid keypad credential' 
+      return {
+        success: false,
+        message: isLockout ? 'Repeated access failure · Lockout active' : 'Invalid keypad credential'
       };
     }
   };
@@ -750,9 +1596,9 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     setEvents(prev => [
       DeviceAdapter.toCampusEvent(
-        normEvt, 
+        normEvt,
         result.status === 'live' ? 'ESP32-CAM stream connected' : 'Camera stream probe failed'
-      ), 
+      ),
       ...prev
     ]);
 
@@ -859,10 +1705,10 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           resolvedAt: timeStr,
           auditTimeline: [
             ...inc.auditTimeline,
-            { 
-              time: timeStr, 
-              action: 'Simulation session reset by operator. Hardware baseline restored.', 
-              actor: userRole.toUpperCase() 
+            {
+              time: timeStr,
+              action: 'Simulation session reset by operator. Hardware baseline restored.',
+              actor: userRole.toUpperCase()
             }
           ]
         };
@@ -884,11 +1730,11 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       ...prev
     ]);
 
-    setActiveSimulations({ 
-      fire: false, 
-      smoke: false, 
-      breach: false, 
-      restrictedMotion: false 
+    setActiveSimulations({
+      fire: false,
+      smoke: false,
+      breach: false,
+      restrictedMotion: false
     });
     addToast('Simulation Reset', 'Simulated emergency states cleared. Historical incident logs preserved.', 'success');
   };
@@ -936,6 +1782,13 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         ]);
 
         closeConfirmModal();
+        addAuditRecord(
+          'REMOTE_DOOR_UNLOCK',
+          `${door.id} (${door.name})`,
+          'SUCCESS',
+          `Remote magnetic lock release authorized by ${userRole.toUpperCase()}`,
+          door.zone
+        );
         addToast('Door Unlocked', `${door.name} has been remotely unlocked.`, 'success');
       }
     });
@@ -944,6 +1797,12 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const lockDoor = (doorId: string) => {
     if (!canManageDoors) {
       addToast('Unauthorized', 'You do not have permission to lock security doors.', 'error');
+      addAuditRecord(
+        'REMOTE_DOOR_LOCK_REJECTED',
+        doorId,
+        'DENIED',
+        `Clearance ${userRole.toUpperCase()} insufficient to lock portal`
+      );
       return;
     }
 
@@ -977,6 +1836,14 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       },
       ...prev
     ]);
+
+    addAuditRecord(
+      'REMOTE_DOOR_LOCK',
+      `${door.id} (${door.name})`,
+      'SUCCESS',
+      `Door locked and armed by ${userRole.toUpperCase()}`,
+      door.zone
+    );
 
     addToast('Door Locked', `${door.name} has been securely locked.`, 'info');
   };
@@ -1014,7 +1881,47 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
       return inc;
     }));
+
+    addAuditRecord(
+      'INCIDENT_ACKNOWLEDGED',
+      incidentId,
+      'SUCCESS',
+      `Incident acknowledged and responder dispatched by ${userRole.toUpperCase()}`
+    );
+
     addToast('Incident Acknowledged', `Incident ${incidentId} status updated to Acknowledged.`, 'info');
+  };
+
+  const investigateIncident = (incidentId: string) => {
+    if (!canManageIncidents) {
+      addToast('Unauthorized', 'Your role cannot dispatch field investigations.', 'error');
+      return;
+    }
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setIncidents(prev => prev.map(inc => {
+      if (inc.id === incidentId) {
+        const updated: CampusIncident = {
+          ...inc,
+          status: 'investigating',
+          auditTimeline: [
+            ...inc.auditTimeline,
+            { time: timeStr, action: 'Field investigation unit dispatched to physical location', actor: userRole.toUpperCase() }
+          ]
+        };
+        if (selectedIncident?.id === incidentId) setSelectedIncident(updated);
+        return updated;
+      }
+      return inc;
+    }));
+
+    addAuditRecord(
+      'INCIDENT_INVESTIGATING',
+      incidentId,
+      'SUCCESS',
+      `Field investigation dispatched to location by ${userRole.toUpperCase()}`
+    );
+
+    addToast('Investigation Dispatched', `Field unit investigating ${incidentId}.`, 'info');
   };
 
   const resolveIncident = (incidentId: string) => {
@@ -1039,20 +1946,38 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
       return inc;
     }));
+
+    addAuditRecord(
+      'INCIDENT_RESOLVED',
+      incidentId,
+      'SUCCESS',
+      `Incident verified and marked Resolved by ${userRole.toUpperCase()}`
+    );
+
     addToast('Incident Resolved', `Incident ${incidentId} marked as Resolved.`, 'success');
   };
 
   return (
     <StateContext.Provider
       value={{
+        connectionState,
+        realtimeMode,
+        systemHealth,
+        authSession,
         userRole,
         setUserRole,
         activeTab,
         setActiveTab,
         searchQuery,
         setSearchQuery,
+        selectedZone,
+        setSelectedZone,
+        selectedCameraId,
+        setSelectedCameraId,
         campusStatus,
         isSimulationActive,
+        isSystemDegraded,
+        setIsSystemDegraded,
         activeSimulations,
         devices,
         alerts,
@@ -1061,6 +1986,7 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         automations,
         doors,
         cameras,
+        auditLog,
         selectedIncident,
         setSelectedIncident,
         selectedDevice,
@@ -1068,9 +1994,12 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         confirmModal,
         closeConfirmModal,
         showConfirmModal,
+        isCommandPaletteOpen,
+        setIsCommandPaletteOpen,
         toasts,
         dismissToast,
         addToast,
+        addAuditRecord,
         isAlarmRinging: alarmState.isRinging,
         isAlarmMuted: alarmState.isMuted,
         audioAutoplayBlocked: alarmState.autoplayBlocked,
@@ -1078,6 +2007,8 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         silenceAlarm,
         triggerFireAlert,
         triggerSmokeAlert,
+        triggerMQ2Elevation,
+        resetMQ2Calibration,
         triggerRestrictedMotion,
         triggerZoneOccupancy,
         triggerZoneVacancy,
@@ -1085,6 +2016,9 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         toggleDeviceOnline,
         updateCameraStream,
         setCameraStatus,
+        captureCameraSnapshot,
+        ptzCameraAction,
+        lockdownZone,
         simulateFire,
         simulateSmoke,
         simulateBreach,
@@ -1094,6 +2028,7 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         lockDoor,
         acknowledgeAlert,
         acknowledgeIncident,
+        investigateIncident,
         resolveIncident,
         canManageDoors,
         canManageIncidents,

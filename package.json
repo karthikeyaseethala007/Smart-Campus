@@ -7,23 +7,31 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "test": "node scripts/run_integration_tests.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
     "framer-motion": "^13.2.0",
     "lucide-react": "^1.40.0",
+    "mqtt": "^5.16.0",
+    "pg": "^8.23.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "three": "^0.186.0"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/three": "^0.185.4",
+    "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^6.1.0",
+    "aedes": "^1.2.0",
     "oxlint": "^1.79.0",
+    "pg-mem": "^3.0.14",
     "typescript": "~6.0.2",
-    "vite": "^8.2.2"
+    "vite": "^8.2.2",
+    "ws": "^8.22.0"
   }
 }

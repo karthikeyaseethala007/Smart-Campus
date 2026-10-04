@@ -13,10 +13,10 @@ export const CommandCenterStatusBanner: React.FC = () => {
 
   return (
     <div
+      className="top-status-banner"
       style={{
         backgroundColor: isEmergency ? '#ff0000' : '#101820',
         color: '#ffffff',
-        padding: '6px 24px',
         fontSize: '0.688rem',
         fontFamily: 'monospace',
         letterSpacing: '0.08em',
@@ -44,26 +44,26 @@ export const CommandCenterStatusBanner: React.FC = () => {
             }}
           />
           <span style={{ fontWeight: 700 }}>
-            {isEmergency ? 'CRITICAL EVACUATION PROTOCOL' : 'SYSTEM OPERATIONAL'}
+            {isEmergency ? 'CRITICAL EVACUATION' : 'SYSTEM OPERATIONAL'}
           </span>
         </div>
 
         <span style={{ opacity: 0.3 }}>·</span>
         <span>{cameraCount} CAMERAS</span>
 
-        <span style={{ opacity: 0.3 }}>·</span>
-        <span>{deviceCount} IoT DEVICES</span>
+        <span className="banner-secondary-item" style={{ opacity: 0.3 }}>·</span>
+        <span className="banner-secondary-item">{deviceCount} IoT DEVICES</span>
 
         <span style={{ opacity: 0.3 }}>·</span>
         <span style={{ color: criticalCount > 0 ? (isEmergency ? '#ffffff' : '#ff8200') : 'inherit' }}>
-          {criticalCount} CRITICAL INCIDENTS
+          {criticalCount} CRITICAL
         </span>
 
-        <span style={{ opacity: 0.3 }}>·</span>
-        <span>{totalKw} kW DEMAND</span>
+        <span className="banner-secondary-item" style={{ opacity: 0.3 }}>·</span>
+        <span className="banner-secondary-item">{totalKw} kW DEMAND</span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className="banner-secondary-item" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.12)',

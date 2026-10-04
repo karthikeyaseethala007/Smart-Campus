@@ -1,5 +1,11 @@
-import React from 'react';
-import { AlertCircle, AlertTriangle, CheckCircle2, ChevronRight, ShieldAlert } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  ShieldAlert,
+  CheckCircle2,
+  ChevronRight,
+  Check,
+  ExternalLink
+} from 'lucide-react';
 import { useAppState } from '../../services/stateContext';
 import type { CampusIncident } from '../../types';
 
@@ -12,7 +18,16 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
   onSelectIncident,
   onViewAll,
 }) => {
-  const { incidents, setSelectedIncident, setActiveTab } = useAppState();
+  const {
+    incidents,
+    setSelectedIncident,
+    setActiveTab,
+    acknowledgeIncident,
+    investigateIncident,
+    resolveIncident,
+  } = useAppState();
+
+  const [activeFilter, setActiveFilter] = useState<'active' | 'critical' | 'warning' | 'resolved'>('active');
 
   const handleIncidentClick = (inc: CampusIncident) => {
     setSelectedIncident(inc);
@@ -31,260 +46,473 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
     }
   };
 
-  // Sort: critical first, then warning, then resolved/info
-  const sortedIncidents = [...incidents].sort((a, b) => {
-    const score = (inc: CampusIncident) => {
-      if (inc.status === 'resolved') return 0;
-      if (inc.severity === 'critical') return 3;
-      if (inc.severity === 'warning') return 2;
-      return 1;
-    };
-    return score(b) - score(a);
+  // Filtered incidents
+  const filteredIncidents = incidents.filter((inc) => {
+    if (activeFilter === 'active') return inc.status !== 'resolved';
+    if (activeFilter === 'critical') return inc.severity === 'critical' && inc.status !== 'resolved';
+    if (activeFilter === 'warning') return inc.severity === 'warning' && inc.status !== 'resolved';
+    if (activeFilter === 'resolved') return inc.status === 'resolved';
+    return true;
   });
 
-  const displayIncidents = sortedIncidents.slice(0, 3);
+  const activeCount = incidents.filter((i) => i.status !== 'resolved').length;
+  const criticalCount = incidents.filter((i) => i.severity === 'critical' && i.status !== 'resolved').length;
+  const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   return (
-    <div
-      aria-label="Live Incidents Priority Operational Strip"
+    <section
+      role="region"
+      aria-label="Live Active Incidents Operations Workspace"
       style={{
+        backgroundColor: 'var(--color-paper-white, #FFFFFF)',
+        borderRadius: '16px',
+        border: '1px solid rgba(16, 24, 32, 0.08)',
+        boxShadow: '0 4px 20px -2px rgba(16, 24, 32, 0.04)',
+        padding: '24px 28px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '8px',
+        gap: '18px',
         width: '100%',
       }}
     >
+      {/* Header Bar */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 4px',
+          flexWrap: 'wrap',
+          gap: '16px',
+          borderBottom: '1px solid rgba(16, 24, 32, 0.08)',
+          paddingBottom: '14px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ShieldAlert size={14} color="#FF8200" />
-          <span
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div
             style={{
-              fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-              fontSize: '0.688rem',
-              fontWeight: 700,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: '#5B6871',
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              backgroundColor: criticalCount > 0 ? 'rgba(255, 0, 0, 0.08)' : 'rgba(255, 130, 0, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            LIVE INCIDENTS
-          </span>
-          <span
-            style={{
-              fontSize: '0.688rem',
-              fontWeight: 600,
-              padding: '1px 6px',
-              borderRadius: '4px',
-              backgroundColor: incidents.some((i) => i.severity === 'critical' && i.status === 'open')
-                ? 'rgba(255, 0, 0, 0.1)'
-                : 'rgba(255, 130, 0, 0.1)',
-              color: incidents.some((i) => i.severity === 'critical' && i.status === 'open')
-                ? '#FF0000'
-                : '#FF8200',
-              fontFamily: "var(--font-mono, monospace)",
-            }}
-          >
-            {incidents.filter((i) => i.status === 'open').length} ACTIVE
-          </span>
-        </div>
+            <ShieldAlert size={16} color={criticalCount > 0 ? '#FF0000' : '#FF8200'} />
+          </div>
 
-        <button
-          onClick={handleViewAll}
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: '2px 6px',
-            cursor: 'pointer',
-            fontSize: '0.688rem',
-            fontWeight: 600,
-            fontFamily: "var(--font-mono, monospace)",
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            color: '#5B6871',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            transition: 'color 0.15s ease',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#101820')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#5B6871')}
-        >
-          <span>INCIDENT LEDGER</span>
-          <ChevronRight size={12} />
-        </button>
-      </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+                  fontSize: '0.688rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: '#5B6871',
+                }}
+              >
+                INCIDENT OPERATIONS WORKSPACE
+              </span>
+              <span
+                style={{
+                  fontSize: '0.625rem',
+                  fontFamily: "var(--font-mono, monospace)",
+                  fontWeight: 700,
+                  padding: '2px 7px',
+                  borderRadius: '4px',
+                  backgroundColor: criticalCount > 0 ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 130, 0, 0.1)',
+                  color: criticalCount > 0 ? '#FF0000' : '#FF8200',
+                }}
+              >
+                {activeCount} ACTIVE
+              </span>
+            </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '12px',
-        }}
-      >
-        {displayIncidents.map((inc) => {
-          const isCritical = inc.severity === 'critical' && inc.status !== 'resolved';
-          const isWarning = inc.severity === 'warning' && inc.status !== 'resolved';
-          const isResolved = inc.status === 'resolved';
-
-          const tagColor = isCritical ? '#FF0000' : isWarning ? '#FF8200' : '#22c55e';
-          const tagBg = isCritical
-            ? 'rgba(255, 0, 0, 0.08)'
-            : isWarning
-            ? 'rgba(255, 130, 0, 0.08)'
-            : 'rgba(34, 197, 94, 0.08)';
-          const borderHighlight = isCritical
-            ? '1px solid rgba(255, 0, 0, 0.35)'
-            : isWarning
-            ? '1px solid rgba(255, 130, 0, 0.25)'
-            : '1px solid rgba(16, 24, 32, 0.08)';
-
-          const tagLabel = isResolved
-            ? 'RESOLVED'
-            : isCritical
-            ? 'CRITICAL'
-            : isWarning
-            ? 'WARNING'
-            : 'MONITORED';
-
-          return (
-            <div
-              key={inc.id}
-              onClick={() => handleIncidentClick(inc)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && handleIncidentClick(inc)}
+            <h2
               style={{
-                backgroundColor: 'var(--color-paper-white, #FFFFFF)',
-                border: borderHighlight,
-                borderRadius: '10px',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '12px',
-                cursor: 'pointer',
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
-                boxShadow: isCritical
-                  ? '0 2px 10px rgba(255, 0, 0, 0.06)'
-                  : '0 2px 8px rgba(16, 24, 32, 0.03)',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 24, 32, 0.07)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = isCritical
-                  ? '0 2px 10px rgba(255, 0, 0, 0.06)'
-                  : '0 2px 8px rgba(16, 24, 32, 0.03)';
+                fontFamily: "var(--font-display, 'Outfit', sans-serif)",
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                color: '#101820',
+                margin: '2px 0 0 0',
+                letterSpacing: '-0.02em',
               }}
             >
-              {/* Left Color Bar indicator */}
-              <div
+              Active Campus Incidents
+            </h2>
+          </div>
+        </div>
+
+        {/* Filter Tabs + View All Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {(['active', 'critical', 'warning', 'resolved'] as const).map((filterKey) => {
+            const isCurrent = activeFilter === filterKey;
+            return (
+              <button
+                key={filterKey}
+                onClick={() => setActiveFilter(filterKey)}
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  bottom: 0,
-                  width: '3px',
-                  backgroundColor: tagColor,
+                  padding: '5px 12px',
+                  borderRadius: '6px',
+                  border: isCurrent ? '1px solid #101820' : '1px solid rgba(16, 24, 32, 0.08)',
+                  backgroundColor: isCurrent ? '#101820' : '#FCFCFD',
+                  color: isCurrent ? '#FFFFFF' : '#5B6871',
+                  fontFamily: "var(--font-mono, monospace)",
+                  fontSize: '0.688rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
                 }}
-              />
+              >
+                {filterKey === 'active' && `Active (${activeCount})`}
+                {filterKey === 'critical' && `Critical (${criticalCount})`}
+                {filterKey === 'warning' && 'Warnings'}
+                {filterKey === 'resolved' && 'Resolved'}
+              </button>
+            );
+          })}
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, paddingLeft: '4px' }}>
-                {/* Status Badge */}
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-                    fontSize: '0.625rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: tagColor,
-                    backgroundColor: tagBg,
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    flexShrink: 0,
-                  }}
-                >
-                  {isCritical ? (
-                    <AlertCircle size={10} color={tagColor} />
-                  ) : isWarning ? (
-                    <AlertTriangle size={10} color={tagColor} />
-                  ) : (
-                    <CheckCircle2 size={10} color={tagColor} />
-                  )}
-                  <span>[ {tagLabel} ]</span>
-                </div>
+          <button
+            onClick={handleViewAll}
+            style={{
+              padding: '5px 12px',
+              borderRadius: '6px',
+              background: 'none',
+              border: '1px solid rgba(16, 24, 32, 0.1)',
+              color: '#101820',
+              fontFamily: "var(--font-mono, monospace)",
+              fontSize: '0.688rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <span>LEDGER</span>
+            <ExternalLink size={11} />
+          </button>
+        </div>
+      </div>
 
-                {/* Event & Location Title */}
-                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-display, 'Outfit', sans-serif)",
-                      fontSize: '0.813rem',
-                      fontWeight: 600,
-                      color: '#101820',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    {inc.event}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-                      fontSize: '0.688rem',
-                      color: '#5B6871',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      marginTop: '2px',
-                    }}
-                  >
-                    {inc.location}
-                  </span>
-                </div>
-              </div>
+      {/* Incident Rows List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {filteredIncidents.length === 0 ? (
+          // SECTION 19: INTENTIONAL EMPTY STATE
+          <div
+            style={{
+              padding: '36px 20px',
+              borderRadius: '10px',
+              backgroundColor: '#FCFCFD',
+              border: '1px dashed rgba(16, 24, 32, 0.12)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              gap: '8px',
+            }}
+          >
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#22c55e',
+              }}
+            >
+              <CheckCircle2 size={18} />
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-display, sans-serif)",
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: '#101820',
+              }}
+            >
+              NO ACTIVE INCIDENTS
+            </div>
+            <p
+              style={{
+                fontSize: '0.75rem',
+                color: '#8A8F8D',
+                fontFamily: "var(--font-mono, monospace)",
+                margin: 0,
+              }}
+            >
+              Campus security is currently stable. Zero unresolved events in filter "{activeFilter}".
+              <br />
+              Last system telemetry sweep verified at {currentTime} UTC.
+            </p>
+          </div>
+        ) : (
+          filteredIncidents.slice(0, 4).map((inc, index) => {
+            const isCritical = inc.severity === 'critical';
+            const isResolved = inc.status === 'resolved';
+            const isInvestigating = inc.status === 'investigating';
+            const isAck = inc.status === 'acknowledged';
 
-              {/* Timestamp & Action Hint */}
+            const statusText = isResolved
+              ? 'RESOLVED'
+              : isInvestigating
+              ? 'INVESTIGATING'
+              : isAck
+              ? 'ACKNOWLEDGED'
+              : 'DETECTED';
+
+            const statusColor = isResolved
+              ? '#22c55e'
+              : isInvestigating
+              ? '#FF8200'
+              : isAck
+              ? '#3a5774'
+              : '#FF0000';
+
+            const statusBg = isResolved
+              ? 'rgba(34, 197, 94, 0.08)'
+              : isInvestigating
+              ? 'rgba(255, 130, 0, 0.08)'
+              : isAck
+              ? 'rgba(58, 87, 116, 0.08)'
+              : 'rgba(255, 0, 0, 0.08)';
+
+            return (
               <div
+                key={inc.id}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  flexShrink: 0,
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '14px',
+                  padding: '14px 18px',
+                  borderRadius: '10px',
+                  border: isCritical && !isResolved
+                    ? '1px solid rgba(255, 0, 0, 0.3)'
+                    : '1px solid rgba(16, 24, 32, 0.08)',
+                  borderLeft: isCritical && !isResolved
+                    ? '4px solid #FF0000'
+                    : isResolved
+                    ? '4px solid #22c55e'
+                    : '4px solid #FF8200',
+                  backgroundColor: isCritical && !isResolved
+                    ? 'rgba(255, 0, 0, 0.02)'
+                    : isResolved
+                    ? '#FCFCFD'
+                    : '#FFFFFF',
+                  boxShadow: isCritical && !isResolved
+                    ? '0 2px 12px rgba(255, 0, 0, 0.06)'
+                    : '0 1px 4px rgba(16, 24, 32, 0.02)',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                <span
-                  style={{
-                    fontFamily: "var(--font-mono, monospace)",
-                    fontSize: '0.688rem',
-                    color: '#8C8C8C',
-                  }}
-                >
-                  {inc.timestamp}
-                </span>
-                <ChevronRight size={13} color="#8C8C8C" />
+                {/* Left: Number, Title, Location, Timestamp */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', minWidth: '260px' }}>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono, monospace)",
+                      fontSize: '0.875rem',
+                      fontWeight: 700,
+                      color: isCritical && !isResolved ? '#FF0000' : '#8A8F8D',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    0{index + 1}
+                  </span>
+
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-display, 'Outfit', sans-serif)",
+                          fontSize: '0.938rem',
+                          fontWeight: 600,
+                          color: '#101820',
+                          letterSpacing: '-0.01em',
+                        }}
+                      >
+                        {inc.event}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.625rem',
+                          fontFamily: "var(--font-mono, monospace)",
+                          fontWeight: 700,
+                          padding: '1px 6px',
+                          borderRadius: '3px',
+                          backgroundColor: isCritical ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 130, 0, 0.1)',
+                          color: isCritical ? '#FF0000' : '#FF8200',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {inc.severity}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '0.688rem',
+                        fontFamily: "var(--font-mono, monospace)",
+                        color: '#5B6871',
+                        marginTop: '3px',
+                      }}
+                    >
+                      <span>{inc.location}</span>
+                      <span>·</span>
+                      <span style={{ color: '#8A8F8D' }}>{inc.timestamp}</span>
+                      <span>·</span>
+                      <span style={{ color: '#101820', fontWeight: 600 }}>{inc.id}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Center: Lifecycle State Machine */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      backgroundColor: statusBg,
+                      border: `1px solid ${statusColor}40`,
+                      fontSize: '0.625rem',
+                      fontFamily: "var(--font-mono, monospace)",
+                      fontWeight: 700,
+                      color: statusColor,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '5px',
+                        height: '5px',
+                        borderRadius: '50%',
+                        backgroundColor: statusColor,
+                      }}
+                    />
+                    <span>{statusText}</span>
+                  </div>
+                </div>
+
+                {/* Right: Operational Actions (Lifecycle Transition) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {inc.status === 'open' && (
+                    <button
+                      onClick={() => acknowledgeIncident(inc.id)}
+                      title="Acknowledge priority incident and record operator dispatch"
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        backgroundColor: '#FF8200',
+                        border: 'none',
+                        color: '#FFFFFF',
+                        fontFamily: "var(--font-mono, monospace)",
+                        fontSize: '0.688rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <Check size={12} />
+                      <span>ACKNOWLEDGE</span>
+                    </button>
+                  )}
+
+                  {inc.status === 'acknowledged' && (
+                    <button
+                      onClick={() => investigateIncident(inc.id)}
+                      title="Dispatch field security officer to incident site"
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        backgroundColor: '#101820',
+                        border: 'none',
+                        color: '#FFFFFF',
+                        fontFamily: "var(--font-mono, monospace)",
+                        fontSize: '0.688rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <span>DISPATCH UNIT</span>
+                    </button>
+                  )}
+
+                  {inc.status === 'investigating' && (
+                    <button
+                      onClick={() => resolveIncident(inc.id)}
+                      title="Mark incident resolved and update compliance ledger"
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        backgroundColor: '#22c55e',
+                        border: 'none',
+                        color: '#FFFFFF',
+                        fontFamily: "var(--font-mono, monospace)",
+                        fontSize: '0.688rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <CheckCircle2 size={12} />
+                      <span>RESOLVE</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => handleIncidentClick(inc)}
+                    title="View incident telemetry audit breakdown"
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      backgroundColor: 'transparent',
+                      border: '1px solid rgba(16, 24, 32, 0.12)',
+                      color: '#101820',
+                      fontFamily: "var(--font-mono, monospace)",
+                      fontSize: '0.688rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span>INSPECT</span>
+                    <ChevronRight size={12} />
+                  </button>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
-    </div>
+    </section>
   );
 };

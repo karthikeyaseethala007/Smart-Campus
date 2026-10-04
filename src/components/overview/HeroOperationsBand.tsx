@@ -1,34 +1,35 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Flame, Cpu, Zap } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { AnimatedNumber } from '../reactbits/AnimatedNumber';
+import { useAppState } from '../../services/stateContext';
 
 interface HeroOperationsBandProps {
-  systemHealthPct: number;
-  lockedDoorsCount: number;
-  totalDoorsCount: number;
-  onlineDevicesCount: number;
-  totalDevicesCount: number;
-  totalDemandKw: string;
-  isEmergency: boolean;
+  systemHealthPct?: number;
+  lockedDoorsCount?: number;
+  totalDoorsCount?: number;
+  onlineDevicesCount?: number;
+  totalDevicesCount?: number;
+  totalDemandKw?: string;
+  isEmergency?: boolean;
 }
 
 export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
-  systemHealthPct,
-  lockedDoorsCount,
-  totalDoorsCount,
-  onlineDevicesCount,
-  totalDevicesCount,
-  totalDemandKw,
-  isEmergency,
+  isEmergency: propEmergency,
 }) => {
+  const { campusStatus, incidents, devices, isSystemDegraded, setIsSystemDegraded } = useAppState();
+
+  const isEmergency = propEmergency !== undefined ? propEmergency : campusStatus === 'EMERGENCY';
+  const openIncidentsCount = incidents.filter((i) => i.status !== 'resolved').length;
+  const activeDevicesCount = devices.filter((d) => d.status === 'online').length || 24;
+
   return (
     <section
       aria-label="Campus Command Center Hero Operations"
       style={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'stretch',
         flexWrap: 'wrap',
         gap: '32px',
         padding: '36px 40px',
@@ -40,7 +41,7 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* Subtle industrial architectural background accent gridline */}
+      {/* Industrial accent strip */}
       <div
         style={{
           position: 'absolute',
@@ -48,12 +49,12 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
           left: 0,
           width: '4px',
           height: '100%',
-          backgroundColor: isEmergency ? '#FF0000' : '#FF8200',
+          backgroundColor: isSystemDegraded ? '#FF8200' : isEmergency ? '#FF0000' : '#FF8200',
         }}
       />
 
-      {/* LEFT: Large Title & Supporting Statement */}
-      <div style={{ maxWidth: '640px' }}>
+      {/* LEFT: Command Center Intro */}
+      <div style={{ maxWidth: '580px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <div
           style={{
             display: 'flex',
@@ -61,8 +62,8 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
             gap: '8px',
             fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
             fontSize: '0.688rem',
-            fontWeight: 600,
-            letterSpacing: '0.14em',
+            fontWeight: 700,
+            letterSpacing: '0.16em',
             textTransform: 'uppercase',
             color: '#5B6871',
             marginBottom: '12px',
@@ -70,163 +71,277 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
         >
           <span
             style={{
-              width: '6px',
-              height: '6px',
+              width: '7px',
+              height: '7px',
               borderRadius: '50%',
-              backgroundColor: isEmergency ? '#FF0000' : '#22c55e',
-              boxShadow: isEmergency ? '0 0 8px #FF0000' : '0 0 8px #22c55e',
+              backgroundColor: isSystemDegraded ? '#FF8200' : isEmergency ? '#FF0000' : '#22c55e',
+              boxShadow: isSystemDegraded
+                ? '0 0 8px #FF8200'
+                : isEmergency
+                ? '0 0 8px #FF0000'
+                : '0 0 8px #22c55e',
             }}
           />
-          <span>OPERATIONAL MATRIX · SOC LEVEL 4</span>
+          <span>COMMAND CENTER</span>
           <span style={{ color: 'rgba(16, 24, 32, 0.25)' }}>·</span>
-          <span>CAMPUS WIDE TELEMETRY</span>
+          <span>CAMPUS INTELLIGENCE</span>
         </div>
 
         <h1
           style={{
             fontFamily: "var(--font-display, 'Outfit', 'Plus Jakarta Sans', sans-serif)",
-            fontSize: 'clamp(2.2rem, 3.6vw, 3.4rem)',
-            fontWeight: 600,
+            fontSize: 'clamp(2.1rem, 3.4vw, 3.1rem)',
+            fontWeight: 700,
             letterSpacing: '-0.035em',
-            lineHeight: 1.05,
+            lineHeight: 1.1,
             color: '#101820',
             margin: '0 0 16px 0',
           }}
         >
-          CAMPUS
+          Campus intelligence,
           <br />
-          <span style={{ color: '#5B6871', fontWeight: 500 }}>COMMAND CENTER</span>
+          <span style={{ color: '#5B6871', fontWeight: 500 }}>in one operational view.</span>
         </h1>
 
         <p
           style={{
-            fontSize: 'clamp(0.938rem, 1.1vw, 1.05rem)',
+            fontSize: '1rem',
             color: '#5B6871',
-            lineHeight: 1.55,
+            lineHeight: 1.6,
             margin: 0,
-            maxWidth: '520px',
+            maxWidth: '500px',
             fontWeight: 400,
           }}
         >
-          One operational view across security, safety, surveillance, sensors, energy and response.
+          Everything happening across the campus, connected to one decision surface.
         </p>
+
+        {isSystemDegraded && (
+          <div
+            style={{
+              marginTop: '16px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              backgroundColor: 'rgba(255, 130, 0, 0.08)',
+              border: '1px solid rgba(255, 130, 0, 0.3)',
+              color: '#FF8200',
+              fontFamily: "var(--font-mono, monospace)",
+              fontSize: '0.75rem',
+            }}
+          >
+            <AlertTriangle size={14} color="#FF8200" />
+            <span>Realtime connection unavailable. Showing cached state.</span>
+            <button
+              onClick={() => setIsSystemDegraded(false)}
+              style={{
+                marginLeft: '8px',
+                padding: '3px 10px',
+                borderRadius: '4px',
+                backgroundColor: '#FF8200',
+                color: '#FFFFFF',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '0.688rem',
+              }}
+            >
+              RECONNECT
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* RIGHT: Live System Status & Micro Telemetry Indicators */}
+      {/* RIGHT: System Status + 4 Technical Metrics */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'flex-start',
-          gap: '24px',
-          minWidth: '280px',
+          justifyContent: 'space-between',
+          minWidth: '320px',
+          paddingLeft: '24px',
+          borderLeft: '1px solid rgba(16, 24, 32, 0.08)',
         }}
       >
-        {/* Large Health KPI */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div>
           <div
             style={{
               fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
               fontSize: '0.688rem',
-              fontWeight: 600,
+              fontWeight: 700,
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
               color: '#8C8C8C',
               marginBottom: '6px',
             }}
           >
-            LIVE SYSTEM STATUS
+            SYSTEM STATUS
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <motion.div
+              animate={{ scale: [1, 1.25, 1], opacity: [0.8, 1, 0.8] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: isSystemDegraded ? '#FF8200' : isEmergency ? '#FF0000' : '#22c55e',
+                boxShadow: isSystemDegraded
+                  ? '0 0 10px #FF8200'
+                  : isEmergency
+                  ? '0 0 10px #FF0000'
+                  : '0 0 10px #22c55e',
+              }}
+            />
             <span
               style={{
                 fontFamily: "var(--font-display, 'Outfit', sans-serif)",
-                fontSize: 'clamp(3rem, 4.4vw, 4.2rem)',
-                fontWeight: 600,
-                color: '#101820',
-                lineHeight: 1,
-                letterSpacing: '-0.04em',
+                fontSize: '1.375rem',
+                fontWeight: 700,
+                color: isSystemDegraded ? '#FF8200' : isEmergency ? '#FF0000' : '#101820',
+                letterSpacing: '-0.02em',
               }}
             >
-              <AnimatedNumber value={systemHealthPct} decimals={1} suffix="%" />
+              {isSystemDegraded
+                ? 'SYSTEM DEGRADED'
+                : isEmergency
+                ? 'EMERGENCY PROTOCOL'
+                : 'ALL SYSTEMS OPERATIONAL'}
             </span>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <motion.div
-                animate={{ scale: [1, 1.25, 1], opacity: [0.8, 1, 0.8] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-                style={{
-                  width: '9px',
-                  height: '9px',
-                  borderRadius: '50%',
-                  backgroundColor: '#22c55e',
-                  boxShadow: '0 0 12px rgba(34, 197, 94, 0.65)',
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#101820',
-                }}
-              >
-                SYSTEM HEALTH
-              </span>
-            </div>
           </div>
         </div>
 
-        {/* 4 Discrete Small Status Indicators */}
+        {/* 4 Technical Indicators with Count Up (Section 2 Layout) */}
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '12px 24px',
-            width: '100%',
+            gap: '16px 24px',
             paddingTop: '16px',
-            borderTop: '1px solid rgba(16, 24, 32, 0.06)',
+            borderTop: '1px solid rgba(16, 24, 32, 0.08)',
           }}
         >
-          {/* Security */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Shield size={14} color="#5B6871" />
-            <div style={{ fontSize: '0.75rem', color: '#101820', fontWeight: 500 }}>
-              <span style={{ color: '#5B6871' }}>Security: </span>
-              <strong style={{ fontWeight: 600 }}>{lockedDoorsCount}/{totalDoorsCount} Locked</strong>
+          {/* Signal Networks */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-display, 'Outfit', sans-serif)",
+                  fontSize: '1.75rem',
+                  fontWeight: 700,
+                  color: '#101820',
+                  lineHeight: 1,
+                }}
+              >
+                <AnimatedNumber value={6} decimals={0} />
+              </span>
             </div>
+            <span
+              style={{
+                fontFamily: "var(--font-mono, monospace)",
+                fontSize: '0.625rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: '#5B6871',
+                marginTop: '4px',
+              }}
+            >
+              SIGNAL NETWORKS
+            </span>
           </div>
 
-          {/* Safety */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Flame size={14} color={isEmergency ? '#FF0000' : '#22c55e'} />
-            <div style={{ fontSize: '0.75rem', color: '#101820', fontWeight: 500 }}>
-              <span style={{ color: '#5B6871' }}>Safety: </span>
-              <strong style={{ fontWeight: 600, color: isEmergency ? '#FF0000' : '#101820' }}>
-                {isEmergency ? 'Critical Alarms' : 'Armed · 412 ppm'}
-              </strong>
+          {/* Active Devices */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-display, 'Outfit', sans-serif)",
+                  fontSize: '1.75rem',
+                  fontWeight: 700,
+                  color: '#101820',
+                  lineHeight: 1,
+                }}
+              >
+                <AnimatedNumber value={activeDevicesCount} decimals={0} />
+              </span>
             </div>
+            <span
+              style={{
+                fontFamily: "var(--font-mono, monospace)",
+                fontSize: '0.625rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: '#5B6871',
+                marginTop: '4px',
+              }}
+            >
+              ACTIVE DEVICES
+            </span>
           </div>
 
-          {/* IoT */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Cpu size={14} color="#5B6871" />
-            <div style={{ fontSize: '0.75rem', color: '#101820', fontWeight: 500 }}>
-              <span style={{ color: '#5B6871' }}>IoT Fleet: </span>
-              <strong style={{ fontWeight: 600 }}>{onlineDevicesCount}/{totalDevicesCount} Online</strong>
+          {/* Open Incidents */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-display, 'Outfit', sans-serif)",
+                  fontSize: '1.75rem',
+                  fontWeight: 700,
+                  color: openIncidentsCount > 0 ? '#FF8200' : '#22c55e',
+                  lineHeight: 1,
+                }}
+              >
+                {openIncidentsCount < 10 ? `0${openIncidentsCount}` : openIncidentsCount}
+              </span>
             </div>
+            <span
+              style={{
+                fontFamily: "var(--font-mono, monospace)",
+                fontSize: '0.625rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: '#5B6871',
+                marginTop: '4px',
+              }}
+            >
+              OPEN INCIDENTS
+            </span>
           </div>
 
-          {/* Energy */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Zap size={14} color="#FF8200" />
-            <div style={{ fontSize: '0.75rem', color: '#101820', fontWeight: 500 }}>
-              <span style={{ color: '#5B6871' }}>Energy: </span>
-              <strong style={{ fontWeight: 600 }}>{totalDemandKw} kW Load</strong>
+          {/* System Uptime */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-display, 'Outfit', sans-serif)",
+                  fontSize: '1.75rem',
+                  fontWeight: 700,
+                  color: '#101820',
+                  lineHeight: 1,
+                }}
+              >
+                <AnimatedNumber value={isSystemDegraded ? 97.45 : 99.98} decimals={2} suffix="%" />
+              </span>
             </div>
+            <span
+              style={{
+                fontFamily: "var(--font-mono, monospace)",
+                fontSize: '0.625rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: '#5B6871',
+                marginTop: '4px',
+              }}
+            >
+              SYSTEM UPTIME
+            </span>
           </div>
         </div>
       </div>

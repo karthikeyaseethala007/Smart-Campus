@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  Shield, 
-  Search, 
-  Bell, 
-  ChevronDown, 
-  Radio, 
-  Flame, 
-  AlertTriangle,
-  X
+import {
+  Shield,
+  Search,
+  Bell,
+  ChevronDown,
+  Radio,
+  Flame,
+  AlertTriangle
 } from 'lucide-react';
 import { useAppState } from '../../services/stateContext';
 import type { UserRole } from '../../types';
@@ -15,16 +14,15 @@ import { AnimatedList } from '../ui/animated-list';
 import { ThemeToggle } from '../ui/theme-toggle';
 
 export const TopBar: React.FC = () => {
-  const { 
-    userRole, 
-    setUserRole, 
-    isSimulationActive, 
-    alerts, 
-    searchQuery, 
-    setSearchQuery,
+  const {
+    userRole,
+    setUserRole,
+    isSimulationActive,
+    alerts,
     setActiveTab,
     setSelectedIncident,
-    incidents
+    incidents,
+    setIsCommandPaletteOpen,
   } = useAppState();
 
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -53,23 +51,14 @@ export const TopBar: React.FC = () => {
         zIndex: 100
       }}
     >
-      <div
-        style={{
-          maxWidth: 'var(--page-max-width)',
-          width: '100%',
-          padding: '0 32px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
-      >
+      <div className="topbar-inner-container">
         {/* Left: Brand Identity in Signifier Serif */}
-        <div 
+        <div
           onClick={() => setActiveTab('landing')}
           style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', userSelect: 'none' }}
           title="Return to Public Editorial Landing"
         >
-          <div 
+          <div
             style={{
               width: '34px',
               height: '34px',
@@ -84,21 +73,23 @@ export const TopBar: React.FC = () => {
             <Shield size={17} />
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            <span 
-              style={{ 
-                fontFamily: 'var(--font-signifier)', 
-                fontSize: '20px', 
-                fontWeight: 400, 
+            <span
+              className="topbar-brand-title"
+              style={{
+                fontFamily: 'var(--font-signifier)',
+                fontSize: '20px',
+                fontWeight: 400,
                 color: 'var(--color-ink-black)',
                 letterSpacing: '-0.3px'
               }}
             >
               Smart Campus <em style={{ fontStyle: 'italic', color: 'var(--color-slate-gray)' }}>Security</em>
             </span>
-            <span 
-              style={{ 
+            <span
+              className="topbar-brand-subtitle"
+              style={{
                 fontFamily: 'var(--font-sohne)',
-                fontSize: '12px', 
+                fontSize: '12px',
                 color: 'var(--color-ash-gray)',
                 letterSpacing: 0
               }}
@@ -109,11 +100,11 @@ export const TopBar: React.FC = () => {
         </div>
 
         {/* Right Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="topbar-right-controls" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Link back to Public Landing */}
           <button
             onClick={() => setActiveTab('landing')}
-            className="pill-btn-ghost"
+            className="pill-btn-ghost topbar-landing-btn"
             style={{ fontSize: '12px', padding: '5px 14px' }}
             title="Switch to Public Landing Page"
           >
@@ -122,7 +113,7 @@ export const TopBar: React.FC = () => {
 
           {/* Persistent Simulation Badge if Active in Peach Accent */}
           {isSimulationActive && (
-            <button 
+            <button
               onClick={() => setActiveTab('overview')}
               className="pill-badge pill-badge-peach"
               style={{ cursor: 'pointer', border: 'none', padding: '6px 14px' }}
@@ -133,51 +124,57 @@ export const TopBar: React.FC = () => {
             </button>
           )}
 
-          {/* Minimal Search Input */}
-          <div 
+          {/* Command Palette Trigger & Search */}
+          <button
+            type="button"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="topbar-search-btn"
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'space-between',
               gap: '8px',
               backgroundColor: 'var(--color-mist-gray)',
               borderRadius: 'var(--radius-buttons)',
-              padding: '6px 14px',
-              width: '210px'
+              padding: '6px 12px',
+              width: '210px',
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'background-color 0.15s ease',
             }}
+            title="Open Command Palette (⌘K or Ctrl+K)"
           >
-            <Search size={14} color="var(--color-slate-gray)" />
-            <input
-              type="text"
-              placeholder="Search telemetry..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Search size={14} color="var(--color-slate-gray)" />
+              <span className="topbar-search-text" style={{ fontFamily: 'var(--font-sohne)', fontSize: '13px', color: 'var(--color-slate-gray)' }}>
+                Search campus...
+              </span>
+            </div>
+            <kbd
+              className="topbar-search-kbd"
               style={{
-                border: 'none',
-                background: 'transparent',
-                outline: 'none',
-                width: '100%',
-                fontFamily: 'var(--font-sohne)',
-                fontSize: '13px',
-                color: 'var(--color-ink-black)'
+                fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+                fontSize: '10px',
+                padding: '2px 5px',
+                borderRadius: '4px',
+                backgroundColor: 'rgba(16, 24, 32, 0.08)',
+                color: 'var(--color-slate-gray)',
+                border: '1px solid rgba(16, 24, 32, 0.1)',
+                fontWeight: 600,
               }}
-            />
-            {searchQuery && (
-              <button 
-                onClick={() => setSearchQuery('')}
-                style={{ color: 'var(--color-slate-gray)', padding: 0 }}
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+            >
+              ⌘K
+            </kbd>
+          </button>
 
           {/* System Online Status Indicator */}
-          <div 
-            className="pill-badge pill-badge-neutral"
+          <div
+            className="pill-badge pill-badge-neutral topbar-online-pill"
             style={{ padding: '6px 12px', fontSize: '13px' }}
           >
             <span className="status-dot status-dot-safe" />
-            <span style={{ color: 'var(--color-ink-black)', fontWeight: 450 }}>Online</span>
+            <span className="topbar-online-text" style={{ color: 'var(--color-ink-black)', fontWeight: 450 }}>Online</span>
           </div>
 
           {/* Notifications Drawer Toggle */}
@@ -200,7 +197,7 @@ export const TopBar: React.FC = () => {
             >
               <Bell size={16} />
               {unreadAlerts.length > 0 && (
-                <span 
+                <span
                   style={{
                     position: 'absolute',
                     top: '-2px',
@@ -224,7 +221,7 @@ export const TopBar: React.FC = () => {
 
             {/* Notifications Dropdown */}
             {isNotifOpen && (
-              <div 
+              <div
                 style={{
                   position: 'absolute',
                   top: '46px',
@@ -255,7 +252,7 @@ export const TopBar: React.FC = () => {
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     <AnimatedList delay={0} className="gap-2">
                       {alerts.slice(0, 5).map(alert => (
-                        <div 
+                        <div
                           key={alert.id}
                           onClick={() => {
                             if (alert.incidentId) {
@@ -306,7 +303,7 @@ export const TopBar: React.FC = () => {
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-              className="pill-btn-ghost"
+              className="pill-btn-ghost topbar-role-btn"
               style={{
                 padding: '6px 14px',
                 fontSize: '13px',
@@ -314,7 +311,7 @@ export const TopBar: React.FC = () => {
                 borderColor: 'rgba(23, 25, 28, 0.15)'
               }}
             >
-              <div 
+              <div
                 style={{
                   width: '20px',
                   height: '20px',
@@ -330,14 +327,14 @@ export const TopBar: React.FC = () => {
               >
                 {userRole.charAt(0).toUpperCase()}
               </div>
-              <span style={{ textTransform: 'capitalize', color: 'var(--color-ink-black)' }}>
+              <span className="topbar-role-label" style={{ textTransform: 'capitalize', color: 'var(--color-ink-black)' }}>
                 {roles.find(r => r.key === userRole)?.label || userRole}
               </span>
               <ChevronDown size={13} color="var(--color-slate-gray)" />
             </button>
 
             {isRoleDropdownOpen && (
-              <div 
+              <div
                 style={{
                   position: 'absolute',
                   top: '46px',

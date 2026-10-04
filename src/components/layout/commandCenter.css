@@ -1,0 +1,308 @@
+/* ==========================================================================
+   SMART CAMPUS COMMAND CENTER (/app) SCOPED RESPONSIVE & POLISH STYLES
+   Strictly scoped to /app command surfaces. ZERO impact on landing page.
+   ========================================================================== */
+
+/* Main Operations Stage Padding */
+.app-main-stage {
+  flex: 1;
+  min-width: 0;
+  padding: 40px 32px 80px 32px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface-canvas, #FCFCFD);
+}
+
+@media (max-width: 1024px) {
+  .app-main-stage {
+    padding: 24px 20px 64px 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-main-stage {
+    padding: 16px 12px 56px 12px;
+  }
+}
+
+/* 1. Surveillance Primary Grid: Responsive 2-Col on Desktop -> 1-Col on Tablet/Mobile */
+.surveillance-stage-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.75fr);
+  gap: 20px;
+  align-items: stretch;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .surveillance-stage-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* 2. Tactical Duo Workspace (Sensors + Access Control) */
+.tactical-duo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .tactical-duo-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* 3. Bottom Operations Area (Activity/Audit Feed + Quick Command Bar) */
+.overview-bottom-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+  gap: 24px;
+  align-items: start;
+  width: 100%;
+}
+
+@media (max-width: 960px) {
+  .overview-bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* 4. Live Operational Telemetry Strip - Unified Console Ribbon */
+.live-operational-nav {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  width: 100%;
+  background-color: var(--color-paper-white, #FFFFFF);
+  border: 1px solid rgba(16, 24, 32, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(16, 24, 32, 0.02);
+}
+
+.live-operational-item {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  position: relative;
+  border-right: 1px solid rgba(16, 24, 32, 0.08);
+  background-color: transparent;
+}
+
+.live-operational-item:last-child {
+  border-right: none;
+}
+
+.live-operational-item:hover {
+  background-color: rgba(16, 24, 32, 0.025);
+}
+
+@media (max-width: 1200px) {
+  .live-operational-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .live-operational-item:nth-child(3) {
+    border-right: none;
+  }
+  .live-operational-item:nth-child(-n+3) {
+    border-bottom: 1px solid rgba(16, 24, 32, 0.08);
+  }
+}
+
+@media (max-width: 640px) {
+  .live-operational-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .live-operational-item {
+    border-right: 1px solid rgba(16, 24, 32, 0.08);
+    border-bottom: 1px solid rgba(16, 24, 32, 0.08);
+  }
+  .live-operational-item:nth-child(2n) {
+    border-right: none;
+  }
+  .live-operational-item:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .live-operational-nav {
+    grid-template-columns: 1fr;
+  }
+  .live-operational-item {
+    border-right: none;
+    border-bottom: 1px solid rgba(16, 24, 32, 0.08);
+  }
+  .live-operational-item:last-child {
+    border-bottom: none;
+  }
+}
+
+/* 5. Horizontal Table Responsive Scroll Container */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 6. Custom Non-Intrusive Technical Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(16, 24, 32, 0.03);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(16, 24, 32, 0.18);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 24, 32, 0.35);
+}
+
+/* 7. Accessibility: Prefers-Reduced-Motion Handling */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 8. High-Visibility Keyboard Focus Rings for Operational Controls */
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible {
+  outline: 2px solid #FF8200 !important;
+  outline-offset: 2px !important;
+}
+
+/* 9. Sidebar Mobile Collapse & Main Stage Full Width */
+@media (max-width: 840px) {
+  .app-sidebar {
+    display: none !important;
+  }
+  .app-main-stage {
+    padding-bottom: 90px !important;
+  }
+}
+
+/* 10. Mobile Operational Bottom Navigation Bar */
+.mobile-nav-bar {
+  display: none;
+}
+
+@media (max-width: 840px) {
+  .mobile-nav-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 62px;
+    background-color: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(16, 24, 32, 0.1);
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 12px;
+    z-index: 990;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* 11. TopBar Responsive Adaptations */
+.topbar-inner-container {
+  max-width: var(--page-max-width);
+  width: 100%;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (max-width: 840px) {
+  .topbar-inner-container {
+    padding: 0 16px !important;
+  }
+  .topbar-landing-btn {
+    display: none !important;
+  }
+  .topbar-brand-subtitle {
+    display: none !important;
+  }
+  .topbar-search-text,
+  .topbar-search-kbd {
+    display: none !important;
+  }
+  .topbar-search-btn {
+    width: 36px !important;
+    padding: 8px !important;
+    justify-content: center !important;
+  }
+  .topbar-right-controls {
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-inner-container {
+    padding: 0 10px !important;
+  }
+  .topbar-brand-title {
+    font-size: 15px !important;
+  }
+  .topbar-online-pill {
+    display: none !important;
+  }
+  .topbar-role-label {
+    display: none !important;
+  }
+  .topbar-role-btn {
+    padding: 6px 8px !important;
+    gap: 4px !important;
+  }
+  .topbar-right-controls {
+    gap: 6px !important;
+  }
+}
+
+/* 12. Overview Header Pills Responsiveness */
+@media (max-width: 600px) {
+  .header-datetime-pill {
+    display: none !important;
+  }
+}
+
+/* 12. Top Technical Status Banner Mobile Responsiveness */
+.top-status-banner {
+  padding: 6px 24px;
+}
+
+@media (max-width: 800px) {
+  .top-status-banner {
+    padding: 6px 12px !important;
+    font-size: 0.625rem !important;
+  }
+  .banner-secondary-item {
+    display: none !important;
+  }
+}

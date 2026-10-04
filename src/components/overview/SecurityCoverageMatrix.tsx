@@ -1,52 +1,66 @@
 import React, { useState } from 'react';
-import { Shield, Video, Lock, Radio, ChevronRight } from 'lucide-react';
+import { Shield, Video, Lock, Radio, ChevronRight, Crosshair } from 'lucide-react';
 import { useAppState } from '../../services/stateContext';
 
 interface ZoneCoverageItem {
   id: string;
   name: string;
   code: string;
+  cameraId: string;
   status: 'nominal' | 'warning' | 'critical';
   statusText: string;
   sensorHealth: string;
   cameraState: string;
   accessState: string;
-  targetTab: 'monitoring' | 'security' | 'safety';
+  targetTab: 'monitoring' | 'security' | 'safety' | 'incidents';
 }
 
 export const SecurityCoverageMatrix: React.FC = () => {
-  const { campusStatus, setActiveTab } = useAppState();
-  const isEmergency = campusStatus === 'EMERGENCY';
+  const {
+    campusStatus,
+    selectedZone,
+    setSelectedZone,
+    setSelectedCameraId,
+    incidents,
+  } = useAppState();
 
+  const isEmergency = campusStatus === 'EMERGENCY';
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
+
+  // Check live incidents to dynamically determine zone statuses
+  const gasIncident = incidents.find((i) => i.id === 'INC-GAS-003' && i.status !== 'resolved');
+  const breachIncident = incidents.find((i) => i.id === 'INC-SEC-001' && i.status !== 'resolved');
 
   const zones: ZoneCoverageItem[] = [
     {
       id: 'ZN-01',
-      name: 'MAIN GATE',
+      name: 'Main Gate',
       code: 'ZN-PRM-01',
+      cameraId: 'CAM-01',
       status: 'nominal',
       statusText: 'NOMINAL',
       sensorHealth: 'PIR Armed · 99% Heartbeat',
       cameraState: 'CAM-01 · LIVE (1080p)',
       accessState: 'Hydraulic Barrier · Locked',
-      targetTab: 'security',
+      targetTab: 'monitoring',
     },
     {
       id: 'ZN-02',
-      name: 'INNOVATION & ROBOTICS LAB',
+      name: 'Innovation & Robotics Lab',
       code: 'ZN-ENG-E04',
+      cameraId: 'CAM-02',
       status: 'nominal',
       statusText: 'NOMINAL',
       sensorHealth: 'PIR Armed · Modbus Relay Active',
       cameraState: 'CAM-02 · LIVE (1080p)',
-      accessState: 'Keypad E-04 · Secured (PIN: 1234)',
+      accessState: 'Keypad E-04 · Secured (PIN: 4821)',
       targetTab: 'security',
     },
     {
       id: 'ZN-03',
-      name: 'CENTRAL LIBRARY',
+      name: 'Central Library',
       code: 'ZN-LIB-01',
+      cameraId: 'CAM-04',
       status: 'nominal',
       statusText: 'NOMINAL',
       sensorHealth: '6 Occupants · Automated HVAC',
@@ -56,49 +70,58 @@ export const SecurityCoverageMatrix: React.FC = () => {
     },
     {
       id: 'ZN-04',
-      name: 'SCIENCE & PHYSICS LAB',
+      name: 'Science & Physics Lab',
       code: 'ZN-SCI-204',
-      status: isEmergency ? 'critical' : 'warning',
-      statusText: isEmergency ? 'CRITICAL EVACUATION' : 'VENTILATION SUPERVISED',
-      sensorHealth: isEmergency ? 'MQ-2 Gas: 840 ppm (ALARM)' : 'MQ-2 Gas: 412 ppm (Purging)',
+      cameraId: 'CAM-03',
+      status: isEmergency || gasIncident ? 'critical' : 'warning',
+      statusText: isEmergency || gasIncident ? 'HAZARD ELEVATED' : 'NOMINAL BASELINE',
+      sensorHealth: isEmergency || gasIncident ? 'MQ-2 Gas: Elevated (ALARM)' : 'MQ-2 Gas: 312 ppm (Nominal)',
       cameraState: 'CAM-03 · LIVE (1080p)',
-      accessState: 'Door S-204 · Interlock Normal',
+      accessState: 'Door S-204 · Damper Isolation Ready',
       targetTab: 'safety',
     },
     {
       id: 'ZN-05',
-      name: 'ACADEMIC HALLWAY',
+      name: 'Academic Hallway',
       code: 'ZN-HLW-W1',
+      cameraId: 'CAM-05',
       status: 'nominal',
       statusText: 'NOMINAL',
       sensorHealth: 'PIR Active · 65% Eco Lights',
-      cameraState: 'CAM-03 (Corridor Overlay)',
+      cameraState: 'CAM-05 · LIVE (1080p)',
       accessState: 'Unrestricted Passage · Supervised',
       targetTab: 'monitoring',
     },
     {
       id: 'ZN-06',
-      name: 'COMPUTER LAB',
+      name: 'Computer Lab',
       code: 'ZN-CMP-L1',
+      cameraId: 'CAM-06',
       status: 'nominal',
       statusText: 'RESOLVED',
       sensorHealth: 'PIR Anomaly Cleared · 20.8°C',
-      cameraState: 'Optical Dome 06 · Armed',
+      cameraState: 'CAM-06 · LIVE (1080p)',
       accessState: 'Badge Reader · Locked',
       targetTab: 'safety',
     },
     {
       id: 'ZN-07',
-      name: 'DATA CENTER / SERVER ROOM',
+      name: 'Data Center / Server Room',
       code: 'ZN-ADM-SRV',
-      status: 'nominal',
-      statusText: 'HIGH SECURITY',
+      cameraId: 'CAM-07',
+      status: breachIncident ? 'critical' : 'nominal',
+      statusText: breachIncident ? 'BREACH ALERT' : 'HIGH SECURITY',
       sensorHealth: 'VESDA Laser Smoke · 100% Ready',
-      cameraState: 'Thermal Cam 07 · Armed',
-      accessState: 'Biometric Interlock SRV-101 · Locked',
+      cameraState: 'CAM-07 · LIVE (1080p)',
+      accessState: 'Biometric Keypad · Locked (PIN: 1234)',
       targetTab: 'security',
     },
   ];
+
+  const handleSelectZone = (zone: ZoneCoverageItem) => {
+    setSelectedZone(zone.name);
+    setSelectedCameraId(zone.cameraId);
+  };
 
   return (
     <div
@@ -133,9 +156,9 @@ export const SecurityCoverageMatrix: React.FC = () => {
             }}
           >
             <Shield size={13} color="#101820" />
-            <span>SECURITY COVERAGE</span>
+            <span>CAMPUS ZONES & SPATIAL MATRIX</span>
             <span style={{ color: 'rgba(16, 24, 32, 0.25)' }}>·</span>
-            <span>7 OPERATIONAL ZONES</span>
+            <span>7 OPERATIONAL NODES</span>
           </div>
 
           <h2
@@ -148,35 +171,66 @@ export const SecurityCoverageMatrix: React.FC = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            Campus Zone Matrix
+            Spatial Security Matrix
           </h2>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '0.688rem', fontFamily: "var(--font-mono, monospace)" }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
-            <span style={{ color: '#5B6871' }}>6 NOMINAL</span>
+        {/* Selected Zone Pill / Indicator */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '9999px',
+              backgroundColor: 'rgba(255, 130, 0, 0.08)',
+              border: '1px solid rgba(255, 130, 0, 0.25)',
+              color: '#FF8200',
+              fontFamily: "var(--font-mono, monospace)",
+              fontSize: '0.688rem',
+              fontWeight: 700,
+            }}
+          >
+            <Crosshair size={12} color="#FF8200" />
+            <span>SPATIAL FOCUS: {selectedZone.toUpperCase()}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: isEmergency ? '#FF0000' : '#FF8200' }} />
-            <span style={{ color: isEmergency ? '#FF0000' : '#FF8200' }}>
-              {isEmergency ? '1 CRITICAL' : '1 SUPERVISED'}
-            </span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '0.688rem', fontFamily: "var(--font-mono, monospace)" }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
+              <span style={{ color: '#5B6871' }}>6 NOMINAL</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: isEmergency || gasIncident ? '#FF0000' : '#FF8200',
+                }}
+              />
+              <span style={{ color: isEmergency || gasIncident ? '#FF0000' : '#FF8200' }}>
+                {isEmergency || gasIncident ? '1 ELEVATED' : '1 SUPERVISED'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* COMPACT CONNECTED OPERATIONAL MATRIX (NOT 7 GIANT CARDS) */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          border: '1px solid rgba(16, 24, 32, 0.08)',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          backgroundColor: '#FFFFFF',
-        }}
-      >
+      {/* 7 Connected Zone Rows */}
+      <div className="table-responsive-wrapper custom-scrollbar">
+        <div
+          style={{
+            minWidth: '820px',
+            display: 'flex',
+            flexDirection: 'column',
+            border: '1px solid rgba(16, 24, 32, 0.08)',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            backgroundColor: '#FFFFFF',
+          }}
+        >
         {/* Table/Matrix Column Headers */}
         <div
           style={{
@@ -202,8 +256,8 @@ export const SecurityCoverageMatrix: React.FC = () => {
           <span />
         </div>
 
-        {/* 7 Connected Zone Rows */}
         {zones.map((zone, index) => {
+          const isSelected = selectedZone.toLowerCase().includes(zone.name.toLowerCase()) || zone.name.toLowerCase().includes(selectedZone.toLowerCase());
           const isCrit = zone.status === 'critical';
           const isWarn = zone.status === 'warning';
           const isHovered = hoveredZone === zone.id;
@@ -218,12 +272,12 @@ export const SecurityCoverageMatrix: React.FC = () => {
           return (
             <div
               key={zone.id}
-              onClick={() => setActiveTab(zone.targetTab)}
+              onClick={() => handleSelectZone(zone)}
               onMouseEnter={() => setHoveredZone(zone.id)}
               onMouseLeave={() => setHoveredZone(null)}
               role="row"
               tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && setActiveTab(zone.targetTab)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSelectZone(zone)}
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'minmax(220px, 1.4fr) 110px minmax(180px, 1fr) minmax(160px, 1fr) minmax(180px, 1fr) 36px',
@@ -231,14 +285,18 @@ export const SecurityCoverageMatrix: React.FC = () => {
                 alignItems: 'center',
                 padding: '12px 20px',
                 borderBottom: index < zones.length - 1 ? '1px solid rgba(16, 24, 32, 0.06)' : 'none',
-                backgroundColor: isHovered
+                backgroundColor: isSelected
+                  ? 'rgba(255, 130, 0, 0.04)'
+                  : isHovered
                   ? 'rgba(16, 24, 32, 0.02)'
                   : isCrit
                   ? 'rgba(255, 0, 0, 0.02)'
                   : '#FFFFFF',
+                borderLeft: isSelected ? '3px solid #FF8200' : '3px solid transparent',
                 cursor: 'pointer',
-                transition: 'background-color 0.15s ease',
+                transition: 'all 0.15s ease',
               }}
+              title={`Click to focus Command Center on ${zone.name}`}
             >
               {/* Zone Name & Code */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -252,17 +310,34 @@ export const SecurityCoverageMatrix: React.FC = () => {
                   }}
                 />
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-display, sans-serif)",
-                      fontSize: '0.813rem',
-                      fontWeight: 600,
-                      color: '#101820',
-                      letterSpacing: '-0.01em',
-                    }}
-                  >
-                    {zone.name}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span
+                      style={{
+                        fontFamily: "var(--font-display, sans-serif)",
+                        fontSize: '0.813rem',
+                        fontWeight: isSelected ? 700 : 600,
+                        color: isSelected ? '#FF8200' : '#101820',
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
+                      {zone.name}
+                    </span>
+                    {isSelected && (
+                      <span
+                        style={{
+                          fontSize: '0.563rem',
+                          fontFamily: "var(--font-mono, monospace)",
+                          padding: '1px 4px',
+                          backgroundColor: '#FF8200',
+                          color: '#FFFFFF',
+                          borderRadius: '2px',
+                          fontWeight: 700,
+                        }}
+                      >
+                        FOCUS
+                      </span>
+                    )}
+                  </div>
                   <span
                     style={{
                       fontFamily: "var(--font-mono, monospace)",
@@ -270,7 +345,7 @@ export const SecurityCoverageMatrix: React.FC = () => {
                       color: '#8A8F8D',
                     }}
                   >
-                    {zone.code}
+                    {zone.code} · {zone.cameraId}
                   </span>
                 </div>
               </div>
@@ -350,13 +425,14 @@ export const SecurityCoverageMatrix: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <ChevronRight
                   size={14}
-                  color={isHovered ? '#101820' : '#8C8C8C'}
-                  style={{ transform: isHovered ? 'translateX(2px)' : 'none', transition: 'all 0.15s ease' }}
+                  color={isSelected ? '#FF8200' : isHovered ? '#101820' : '#8C8C8C'}
+                  style={{ transform: isHovered || isSelected ? 'translateX(2px)' : 'none', transition: 'all 0.15s ease' }}
                 />
               </div>
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );
