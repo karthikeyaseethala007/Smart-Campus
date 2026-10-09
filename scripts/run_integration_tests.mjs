@@ -32,8 +32,11 @@ async function runTests() {
     console.log('\n[Suite 6/7] Smart Campus Identity, Role Authorization & Anti-Escalation Suite...');
     await server.ssrLoadModule('./server/__tests__/identity_role_security.test.ts');
 
-    console.log('\n[Suite 7/7] Smart Campus Security & Functionality Remediation Full Suite...');
+    console.log('\n[Suite 7/8] Smart Campus Security & Functionality Remediation Full Suite...');
     await server.ssrLoadModule('./server/__tests__/security_remediation_full.test.ts');
+
+    console.log('\n[Suite 8/8] Production Login & Diagnostics Remediation Suite...');
+    await server.ssrLoadModule('./server/__tests__/production_login_remediation.test.ts');
 
     console.log('\n--- ALL TEST SUITES COMPLETED SUCCESSFULLY ---');
   } catch (err) {

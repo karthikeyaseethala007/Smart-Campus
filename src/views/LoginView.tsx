@@ -234,7 +234,7 @@ export const LoginView: React.FC<{ gatewayUnavailable?: boolean }> = ({ gatewayU
       const data = await authService.getGoogleAuthUrl();
       if (!data.configured || !data.authUrl) {
         setGoogleState('error');
-        setGoogleErrorMessage('Google authentication unavailable. Please try again or use institutional recovery.');
+        setGoogleErrorMessage(data.error || 'Google authentication unavailable. Please try again or use institutional recovery.');
         return;
       }
 
@@ -243,7 +243,7 @@ export const LoginView: React.FC<{ gatewayUnavailable?: boolean }> = ({ gatewayU
       window.location.href = data.authUrl;
     } catch {
       setGoogleState('error');
-      setGoogleErrorMessage('Google authentication unavailable. Please try again or use institutional recovery.');
+      setGoogleErrorMessage('Google authentication unavailable. Security Gateway is unreachable.');
     }
   };
 

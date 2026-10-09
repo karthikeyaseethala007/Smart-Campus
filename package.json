@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "start": "node --import tsx/esm server/index.ts",
     "lint": "oxlint",
     "test": "node scripts/run_integration_tests.mjs",
     "preview": "vite preview"

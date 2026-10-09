@@ -57,6 +57,12 @@ if (process.env.NODE_ENV !== 'production') {
   if (!parsedTrustedOrigins.includes('http://127.0.0.1:5173')) parsedTrustedOrigins.push('http://127.0.0.1:5173');
 }
 
+// In production and all environments, also ensure the deployed Vercel frontend origin is trusted
+const VERCEL_PRODUCTION_ORIGIN = 'https://smart-campus-ten-eta.vercel.app';
+if (activeCorsOrigin !== '*' && !parsedTrustedOrigins.includes(VERCEL_PRODUCTION_ORIGIN)) {
+  parsedTrustedOrigins.push(VERCEL_PRODUCTION_ORIGIN);
+}
+
 export const config: ServerConfig = {
   port: Number(process.env.PORT || 8080),
   host: process.env.HOST || '0.0.0.0',
@@ -88,12 +94,12 @@ export const config: ServerConfig = {
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
   googleOAuthRedirectUri: process.env.GOOGLE_OAUTH_REDIRECT_URI || (
     process.env.NODE_ENV === 'production'
-      ? 'https://campus-api.internal/api/auth/google/callback'
+      ? 'https://smart-campus-o8y3.onrender.com/api/auth/google/callback'
       : 'http://localhost:8080/api/auth/google/callback'
   ),
   frontendUrl: process.env.FRONTEND_URL || (
     process.env.NODE_ENV === 'production'
-      ? 'https://campus.internal'
+      ? 'https://smart-campus-ten-eta.vercel.app'
       : 'http://localhost:5173'
   ),
   authMaxFailedAttempts: Number(process.env.AUTH_MAX_FAILED_ATTEMPTS || 3),
