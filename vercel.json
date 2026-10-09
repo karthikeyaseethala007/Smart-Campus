@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/:path*",
@@ -8,6 +7,10 @@
     },
     {
       "source": "/((?!assets/|favicon\\.ico|.*\\..*).*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
