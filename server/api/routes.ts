@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { db, type DbUser } from '../db/database';
 import { serverAuth } from '../auth/authService';
+import { googleAuth } from '../auth/googleAuth';
+import { recoveryService } from '../auth/recoveryService';
 import { cctvGateway } from '../cameras/cctvGateway';
 import { deviceRegistry } from '../devices/deviceRegistry';
 import { serverEventBus } from '../events/serverEventBus';
@@ -228,10 +230,27 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       const loginResult = await serverAuth.login(username, password, ip);
       if (!loginResult.success) {
         if (loginResult.lockedOut) {
-          sendError(res, 423, loginResult.error || 'Account Locked Out', correlationId);
+          sendJson(res, 423, {
+            success: false,
+            statusCode: 423,
+            error: loginResult.error || 'Account Locked Out',
+            lockedOut: true,
+            retryAfterSeconds: loginResult.retryAfterSeconds,
+            lockedUntil: loginResult.lockedUntil,
+            attempts: loginResult.attempts,
+            correlationId,
+            timestamp: new Date().toISOString(),
+          }, correlationId);
           return;
         }
-        sendError(res, 401, loginResult.error || 'Invalid credentials', correlationId);
+        sendJson(res, 401, {
+          success: false,
+          statusCode: 401,
+          error: loginResult.error || 'Invalid credentials',
+          attempts: loginResult.attempts,
+          correlationId,
+          timestamp: new Date().toISOString(),
+        }, correlationId);
         return;
       }
 
@@ -239,6 +258,32 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     } catch (err: any) {
       sendError(res, 400, err.message, correlationId);
     }
+    return;
+  }
+
+  if (pathname === '/api/auth/lockout-status' && method === 'GET') {
+    const limit = 60;
+    if (!checkRateLimit(`lockout_status_${ip}`, limit, 60000)) {
+      sendError(res, 429, 'Rate limit exceeded: Too many lockout status requests.', correlationId);
+      return;
+    }
+    const username = parsedUrl.searchParams.get('username') || '';
+    const status = serverAuth.getLockoutStatus(username);
+    sendJson(res, 200, {
+      success: true,
+      locked: status.locked,
+      lockedOut: status.lockedOut,
+      remainingSeconds: status.remainingSeconds,
+      retryAfterSeconds: status.retryAfterSeconds,
+      lockedUntil: status.lockedUntil,
+    }, correlationId);
+    return;
+  }
+
+  if (pathname === '/api/auth/lockout-clear' && method === 'POST') {
+    const body = await parseBody<{ identifier: string }>(req);
+    await serverAuth.clearLockout(body?.identifier || '');
+    sendJson(res, 200, { success: true, message: 'Lockout cleared' }, correlationId);
     return;
   }
 
@@ -258,6 +303,228 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     }
     const { passwordHash: _, ...safeUser } = user;
     sendJson(res, 200, { user: safeUser }, correlationId);
+    return;
+  }
+
+  // 2.2 PASSWORD RECOVERY ENDPOINTS
+  if (pathname === '/api/auth/recovery/request' && method === 'POST') {
+    const limit = process.env.NODE_ENV === 'test' ? 1000 : 20;
+    if (!checkRateLimit(`recovery_req_${ip}`, limit, 60000)) {
+      sendError(res, 429, 'Rate limit exceeded. Try again in 60s.', correlationId);
+      return;
+    }
+    try {
+      const body = await parseBody(req, correlationId);
+      const { identifier } = body;
+      const result = await recoveryService.requestPasswordRecovery(identifier);
+      sendJson(res, 200, result, correlationId);
+    } catch (err: any) {
+      sendError(res, 400, err.message, correlationId);
+    }
+    return;
+  }
+
+  if (pathname === '/api/auth/recovery/verify-code' && method === 'POST') {
+    const limit = process.env.NODE_ENV === 'test' ? 1000 : 15;
+    if (!checkRateLimit(`recovery_code_${ip}`, limit, 60000)) {
+      sendError(res, 429, 'Rate limit exceeded. Try again in 60s.', correlationId);
+      return;
+    }
+    try {
+      const body = await parseBody(req, correlationId);
+      const { username, code } = body;
+      const result = await recoveryService.verifyRecoveryCode(username, code, ip);
+      if (!result.success) {
+        sendError(res, 400, result.error || 'Invalid recovery code', correlationId);
+        return;
+      }
+      sendJson(res, 200, result, correlationId);
+    } catch (err: any) {
+      sendError(res, 400, err.message, correlationId);
+    }
+    return;
+  }
+
+  if (pathname === '/api/auth/recovery/verify-google' && method === 'POST') {
+    const limit = process.env.NODE_ENV === 'test' ? 1000 : 15;
+    if (!checkRateLimit(`recovery_google_${ip}`, limit, 60000)) {
+      sendError(res, 429, 'Rate limit exceeded. Try again in 60s.', correlationId);
+      return;
+    }
+    try {
+      const body = await parseBody(req, correlationId);
+      const { username, code, state } = body;
+
+      if (!googleAuth.validateAndConsumeState(state)) {
+        sendError(res, 400, 'Invalid or expired OAuth state parameter', correlationId);
+        return;
+      }
+
+      const exchangeResult = await googleAuth.exchangeCodeAndFetchUser(code);
+      if (!exchangeResult.success || !exchangeResult.googleUser) {
+        sendError(res, 400, exchangeResult.error || 'Google token exchange failed', correlationId);
+        return;
+      }
+
+      const verifyResult = await recoveryService.verifyGoogleForRecovery(username, exchangeResult.googleUser, ip);
+      if (!verifyResult.success) {
+        sendError(res, 400, verifyResult.error || 'Google recovery verification failed', correlationId);
+        return;
+      }
+
+      sendJson(res, 200, verifyResult, correlationId);
+    } catch (err: any) {
+      sendError(res, 400, err.message, correlationId);
+    }
+    return;
+  }
+
+  if (pathname === '/api/auth/recovery/reset' && method === 'POST') {
+    const limit = process.env.NODE_ENV === 'test' ? 1000 : 15;
+    if (!checkRateLimit(`recovery_reset_${ip}`, limit, 60000)) {
+      sendError(res, 429, 'Rate limit exceeded. Try again in 60s.', correlationId);
+      return;
+    }
+    try {
+      const body = await parseBody(req, correlationId);
+      const { recoveryToken, newPassword } = body;
+      const result = await recoveryService.resetPassword(recoveryToken, newPassword, ip);
+      if (!result.success) {
+        sendError(res, 400, result.error || 'Password reset failed', correlationId);
+        return;
+      }
+      sendJson(res, 200, result, correlationId);
+    } catch (err: any) {
+      sendError(res, 400, err.message, correlationId);
+    }
+    return;
+  }
+
+  if (pathname === '/api/auth/recovery/generate-codes' && method === 'POST') {
+    const user = await requireUserAuth(req, res, correlationId);
+    if (!user) return;
+    try {
+      const result = await recoveryService.generatePreEnrolledRecoveryCodes(user.id);
+      if (!result.success) {
+        sendError(res, 403, result.error || 'Failed to generate recovery codes', correlationId);
+        return;
+      }
+      sendJson(res, 200, result, correlationId);
+    } catch (err: any) {
+      sendError(res, 500, err.message, correlationId);
+    }
+    return;
+  }
+
+  // 2.1 GOOGLE OAUTH ENDPOINTS
+  if (pathname === '/api/auth/google/url' && method === 'GET') {
+    const limit = process.env.NODE_ENV === 'test' ? 1000 : 30;
+    if (!checkRateLimit(`google_url_${ip}`, limit, 60000)) {
+      sendError(res, 429, 'Rate limit exceeded. Try again in 60s.', correlationId);
+      return;
+    }
+
+    const authUrlData = googleAuth.generateAuthUrl();
+    sendJson(res, 200, authUrlData, correlationId);
+    return;
+  }
+
+  if (pathname === '/api/auth/google/callback' && method === 'GET') {
+    const queryCode = parsedUrl.searchParams.get('code');
+    const queryState = parsedUrl.searchParams.get('state');
+    const queryError = parsedUrl.searchParams.get('error');
+
+    if (queryError) {
+      res.writeHead(302, {
+        Location: `${config.frontendUrl}/login?error=google_${encodeURIComponent(queryError)}`,
+      });
+      res.end();
+      return;
+    }
+
+    if (!queryCode || !queryState) {
+      res.writeHead(302, {
+        Location: `${config.frontendUrl}/login?error=invalid_callback`,
+      });
+      res.end();
+      return;
+    }
+
+    if (!googleAuth.validateAndConsumeState(queryState)) {
+      res.writeHead(302, {
+        Location: `${config.frontendUrl}/login?error=invalid_oauth_state`,
+      });
+      res.end();
+      return;
+    }
+
+    const exchangeResult = await googleAuth.exchangeCodeAndFetchUser(queryCode);
+    if (!exchangeResult.success || !exchangeResult.googleUser) {
+      res.writeHead(302, {
+        Location: `${config.frontendUrl}/login?error=google_exchange_failed`,
+      });
+      res.end();
+      return;
+    }
+
+    const authResult = await googleAuth.authenticateGoogleIdentity(exchangeResult.googleUser, ip);
+    if (!authResult.success || !authResult.session) {
+      res.writeHead(302, {
+        Location: `${config.frontendUrl}/login?error=unauthorized_google_account`,
+      });
+      res.end();
+      return;
+    }
+
+    res.writeHead(302, {
+      Location: `${config.frontendUrl}/login?token=${encodeURIComponent(authResult.session.sessionToken)}&expiresAt=${encodeURIComponent(authResult.session.expiresAt)}`,
+    });
+    res.end();
+    return;
+  }
+
+  if ((pathname === '/api/auth/google/exchange' || pathname === '/api/auth/google/callback') && method === 'POST') {
+    const limit = process.env.NODE_ENV === 'test' ? 1000 : 30;
+    if (!checkRateLimit(`google_exchange_${ip}`, limit, 60000)) {
+      sendError(res, 429, 'Rate limit exceeded for authentication requests. Try again in 60s.', correlationId);
+      return;
+    }
+
+    try {
+      const body = await parseBody(req, correlationId);
+      const { code, state } = body;
+
+      if (!code || typeof code !== 'string') {
+        sendError(res, 400, 'Bad Request: code string required', correlationId);
+        return;
+      }
+
+      if (!state || typeof state !== 'string') {
+        sendError(res, 400, 'Bad Request: state string required', correlationId);
+        return;
+      }
+
+      if (!googleAuth.validateAndConsumeState(state)) {
+        sendError(res, 400, 'Invalid or expired OAuth state parameter', correlationId);
+        return;
+      }
+
+      const exchangeResult = await googleAuth.exchangeCodeAndFetchUser(code);
+      if (!exchangeResult.success || !exchangeResult.googleUser) {
+        sendError(res, 401, exchangeResult.error || 'Google authorization code exchange failed', correlationId);
+        return;
+      }
+
+      const authResult = await googleAuth.authenticateGoogleIdentity(exchangeResult.googleUser, ip);
+      if (!authResult.success || !authResult.session) {
+        sendError(res, 403, authResult.error || 'Google identity is not authorized for this campus console.', correlationId);
+        return;
+      }
+
+      sendJson(res, 200, { success: true, session: authResult.session }, correlationId);
+    } catch (err: any) {
+      sendError(res, 400, err.message, correlationId);
+    }
     return;
   }
 

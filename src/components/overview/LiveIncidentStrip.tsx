@@ -111,7 +111,7 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
                   fontWeight: 700,
                   letterSpacing: '0.14em',
                   textTransform: 'uppercase',
-                  color: '#5B6871',
+                  color: 'var(--color-slate-gray)',
                 }}
               >
                 INCIDENT OPERATIONS WORKSPACE
@@ -136,7 +136,7 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
                 fontFamily: "var(--font-display, 'Outfit', sans-serif)",
                 fontSize: '1.25rem',
                 fontWeight: 600,
-                color: '#101820',
+                color: 'var(--color-ink-black)',
                 margin: '2px 0 0 0',
                 letterSpacing: '-0.02em',
               }}
@@ -157,9 +157,9 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
                 style={{
                   padding: '5px 12px',
                   borderRadius: '6px',
-                  border: isCurrent ? '1px solid #101820' : '1px solid rgba(16, 24, 32, 0.08)',
-                  backgroundColor: isCurrent ? '#101820' : '#FCFCFD',
-                  color: isCurrent ? '#FFFFFF' : '#5B6871',
+                  border: isCurrent ? '1px solid var(--color-ink-black)' : '1px solid rgba(16, 24, 32, 0.08)',
+                  backgroundColor: isCurrent ? 'var(--color-ink-black)' : 'var(--surface-canvas, #FCFCFD)',
+                  color: isCurrent ? 'var(--color-paper-white)' : 'var(--color-slate-gray)',
                   fontFamily: "var(--font-mono, monospace)",
                   fontSize: '0.688rem',
                   fontWeight: 600,
@@ -184,7 +184,7 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
               borderRadius: '6px',
               background: 'none',
               border: '1px solid rgba(16, 24, 32, 0.1)',
-              color: '#101820',
+              color: 'var(--color-ink-black)',
               fontFamily: "var(--font-mono, monospace)",
               fontSize: '0.688rem',
               fontWeight: 600,
@@ -208,7 +208,7 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
             style={{
               padding: '36px 20px',
               borderRadius: '10px',
-              backgroundColor: '#FCFCFD',
+              backgroundColor: 'var(--surface-section-fog, #FCFCFD)',
               border: '1px dashed rgba(16, 24, 32, 0.12)',
               display: 'flex',
               flexDirection: 'column',
@@ -237,7 +237,7 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
                 fontFamily: "var(--font-display, sans-serif)",
                 fontSize: '1rem',
                 fontWeight: 600,
-                color: '#101820',
+                color: 'var(--color-ink-black)',
               }}
             >
               NO ACTIVE INCIDENTS
@@ -337,7 +337,7 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
                           fontFamily: "var(--font-display, 'Outfit', sans-serif)",
                           fontSize: '0.938rem',
                           fontWeight: 600,
-                          color: '#101820',
+                          color: 'var(--color-ink-black)',
                           letterSpacing: '-0.01em',
                         }}
                       >
@@ -366,7 +366,7 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
                         gap: '8px',
                         fontSize: '0.688rem',
                         fontFamily: "var(--font-mono, monospace)",
-                        color: '#5B6871',
+                        color: 'var(--color-slate-gray)',
                         marginTop: '3px',
                       }}
                     >
@@ -374,7 +374,7 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
                       <span>·</span>
                       <span style={{ color: '#8A8F8D' }}>{inc.timestamp}</span>
                       <span>·</span>
-                      <span style={{ color: '#101820', fontWeight: 600 }}>{inc.id}</span>
+                      <span style={{ color: 'var(--color-ink-black)', fontWeight: 600 }}>{inc.id}</span>
                     </div>
                   </div>
                 </div>
@@ -444,9 +444,9 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
                       style={{
                         padding: '6px 14px',
                         borderRadius: '6px',
-                        backgroundColor: '#101820',
+                        backgroundColor: 'var(--color-ink-black)',
                         border: 'none',
-                        color: '#FFFFFF',
+                        color: 'var(--color-paper-white)',
                         fontFamily: "var(--font-mono, monospace)",
                         fontSize: '0.688rem',
                         fontWeight: 700,
@@ -494,7 +494,7 @@ export const LiveIncidentStrip: React.FC<LiveIncidentStripProps> = ({
                       borderRadius: '6px',
                       backgroundColor: 'transparent',
                       border: '1px solid rgba(16, 24, 32, 0.12)',
-                      color: '#101820',
+                      color: 'var(--color-ink-black)',
                       fontFamily: "var(--font-mono, monospace)",
                       fontSize: '0.688rem',
                       fontWeight: 600,

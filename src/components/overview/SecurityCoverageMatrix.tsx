@@ -151,11 +151,11 @@ export const SecurityCoverageMatrix: React.FC = () => {
               fontWeight: 700,
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
-              color: '#5B6871',
+              color: 'var(--color-slate-gray)',
               marginBottom: '4px',
             }}
           >
-            <Shield size={13} color="#101820" />
+            <Shield size={13} color="var(--color-ink-black)" />
             <span>CAMPUS ZONES & SPATIAL MATRIX</span>
             <span style={{ color: 'rgba(16, 24, 32, 0.25)' }}>·</span>
             <span>7 OPERATIONAL NODES</span>
@@ -166,7 +166,7 @@ export const SecurityCoverageMatrix: React.FC = () => {
               fontFamily: "var(--font-display, 'Outfit', sans-serif)",
               fontSize: '1.375rem',
               fontWeight: 600,
-              color: '#101820',
+              color: 'var(--color-ink-black)',
               margin: 0,
               letterSpacing: '-0.02em',
             }}
@@ -199,7 +199,7 @@ export const SecurityCoverageMatrix: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '0.688rem', fontFamily: "var(--font-mono, monospace)" }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
-              <span style={{ color: '#5B6871' }}>6 NOMINAL</span>
+              <span style={{ color: 'var(--color-slate-gray)' }}>6 NOMINAL</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span
@@ -316,7 +316,7 @@ export const SecurityCoverageMatrix: React.FC = () => {
                         fontFamily: "var(--font-display, sans-serif)",
                         fontSize: '0.813rem',
                         fontWeight: isSelected ? 700 : 600,
-                        color: isSelected ? '#FF8200' : '#101820',
+                        color: isSelected ? '#FF8200' : 'var(--color-ink-black)',
                         letterSpacing: '-0.01em',
                       }}
                     >
@@ -342,7 +342,7 @@ export const SecurityCoverageMatrix: React.FC = () => {
                     style={{
                       fontFamily: "var(--font-mono, monospace)",
                       fontSize: '0.625rem',
-                      color: '#8A8F8D',
+                      color: '#8C8C8C',
                     }}
                   >
                     {zone.code} · {zone.cameraId}
@@ -371,12 +371,12 @@ export const SecurityCoverageMatrix: React.FC = () => {
 
               {/* Sensor Health */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Radio size={12} color="#5B6871" style={{ flexShrink: 0 }} />
+                <Radio size={12} color="var(--color-slate-gray)" style={{ flexShrink: 0 }} />
                 <span
                   style={{
                     fontFamily: "var(--font-mono, monospace)",
                     fontSize: '0.75rem',
-                    color: isCrit ? '#FF0000' : '#5B6871',
+                    color: isCrit ? '#FF0000' : 'var(--color-slate-gray)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -388,12 +388,12 @@ export const SecurityCoverageMatrix: React.FC = () => {
 
               {/* Camera State */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Video size={12} color="#101820" style={{ flexShrink: 0 }} />
+                <Video size={12} color="var(--color-ink-black)" style={{ flexShrink: 0 }} />
                 <span
                   style={{
                     fontFamily: "var(--font-mono, monospace)",
                     fontSize: '0.75rem',
-                    color: '#101820',
+                    color: 'var(--color-ink-black)',
                     fontWeight: 500,
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -406,12 +406,12 @@ export const SecurityCoverageMatrix: React.FC = () => {
 
               {/* Access State */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Lock size={12} color="#5B6871" style={{ flexShrink: 0 }} />
+                <Lock size={12} color="var(--color-slate-gray)" style={{ flexShrink: 0 }} />
                 <span
                   style={{
                     fontFamily: "var(--font-mono, monospace)",
                     fontSize: '0.75rem',
-                    color: '#5B6871',
+                    color: 'var(--color-slate-gray)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -425,7 +425,7 @@ export const SecurityCoverageMatrix: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <ChevronRight
                   size={14}
-                  color={isSelected ? '#FF8200' : isHovered ? '#101820' : '#8C8C8C'}
+                  color={isSelected ? '#FF8200' : isHovered ? 'var(--color-ink-black)' : '#8C8C8C'}
                   style={{ transform: isHovered || isSelected ? 'translateX(2px)' : 'none', transition: 'all 0.15s ease' }}
                 />
               </div>

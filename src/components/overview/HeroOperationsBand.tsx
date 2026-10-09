@@ -65,7 +65,7 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
             fontWeight: 700,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
-            color: '#5B6871',
+            color: 'var(--color-slate-gray)',
             marginBottom: '12px',
           }}
         >
@@ -83,7 +83,7 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
             }}
           />
           <span>COMMAND CENTER</span>
-          <span style={{ color: 'rgba(16, 24, 32, 0.25)' }}>·</span>
+          <span style={{ color: 'var(--color-slate-gray)', opacity: 0.5 }}>·</span>
           <span>CAMPUS INTELLIGENCE</span>
         </div>
 
@@ -94,19 +94,19 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
             fontWeight: 700,
             letterSpacing: '-0.035em',
             lineHeight: 1.1,
-            color: '#101820',
+            color: 'var(--color-ink-black)',
             margin: '0 0 16px 0',
           }}
         >
           Campus intelligence,
           <br />
-          <span style={{ color: '#5B6871', fontWeight: 500 }}>in one operational view.</span>
+          <span style={{ color: 'var(--color-slate-gray)', fontWeight: 500 }}>in one operational view.</span>
         </h1>
 
         <p
           style={{
             fontSize: '1rem',
-            color: '#5B6871',
+            color: 'var(--color-slate-gray)',
             lineHeight: 1.6,
             margin: 0,
             maxWidth: '500px',
@@ -201,7 +201,7 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
                 fontFamily: "var(--font-display, 'Outfit', sans-serif)",
                 fontSize: '1.375rem',
                 fontWeight: 700,
-                color: isSystemDegraded ? '#FF8200' : isEmergency ? '#FF0000' : '#101820',
+                color: isSystemDegraded ? '#FF8200' : isEmergency ? '#FF0000' : 'var(--color-ink-black)',
                 letterSpacing: '-0.02em',
               }}
             >
@@ -232,7 +232,7 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
                   fontFamily: "var(--font-display, 'Outfit', sans-serif)",
                   fontSize: '1.75rem',
                   fontWeight: 700,
-                  color: '#101820',
+                  color: 'var(--color-ink-black)',
                   lineHeight: 1,
                 }}
               >
@@ -246,7 +246,7 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
                 fontWeight: 700,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: '#5B6871',
+                color: 'var(--color-slate-gray)',
                 marginTop: '4px',
               }}
             >
@@ -262,7 +262,7 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
                   fontFamily: "var(--font-display, 'Outfit', sans-serif)",
                   fontSize: '1.75rem',
                   fontWeight: 700,
-                  color: '#101820',
+                  color: 'var(--color-ink-black)',
                   lineHeight: 1,
                 }}
               >
@@ -276,7 +276,7 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
                 fontWeight: 700,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: '#5B6871',
+                color: 'var(--color-slate-gray)',
                 marginTop: '4px',
               }}
             >
@@ -306,7 +306,7 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
                 fontWeight: 700,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: '#5B6871',
+                color: 'var(--color-slate-gray)',
                 marginTop: '4px',
               }}
             >
@@ -322,7 +322,7 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
                   fontFamily: "var(--font-display, 'Outfit', sans-serif)",
                   fontSize: '1.75rem',
                   fontWeight: 700,
-                  color: '#101820',
+                  color: 'var(--color-ink-black)',
                   lineHeight: 1,
                 }}
               >
@@ -336,7 +336,7 @@ export const HeroOperationsBand: React.FC<HeroOperationsBandProps> = ({
                 fontWeight: 700,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: '#5B6871',
+                color: 'var(--color-slate-gray)',
                 marginTop: '4px',
               }}
             >

@@ -217,10 +217,10 @@ input:focus-visible {
     left: 0;
     right: 0;
     height: 62px;
-    background-color: rgba(255, 255, 255, 0.96);
+    background-color: var(--surface-card-mist, rgba(255, 255, 255, 0.96));
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid rgba(16, 24, 32, 0.1);
+    border-top: var(--border-hairline, 1px solid rgba(16, 24, 32, 0.1));
     align-items: center;
     justify-content: space-around;
     padding: 0 12px;

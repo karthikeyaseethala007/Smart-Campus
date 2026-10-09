@@ -22,6 +22,8 @@ describe('Security Remediation Phase 2 — Remaining Audit Findings Regression S
     wsUrl = `ws://127.0.0.1:${port}/ws`;
 
     // Setup valid sessions
+    await serverAuth.clearLockout('admin');
+    await serverAuth.clearLockout('student');
     const adminLogin = await serverAuth.login('admin', 'password123');
     assert.strictEqual(adminLogin.success, true);
     adminToken = adminLogin.session!.sessionToken;

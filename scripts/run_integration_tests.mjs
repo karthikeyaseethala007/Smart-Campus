@@ -26,8 +26,14 @@ async function runTests() {
     console.log('\n[Suite 4/5] Security Remediation Phase 1 Direct Exploit Regression Suite...');
     await server.ssrLoadModule('./server/__tests__/security_remediation_phase1.test.ts');
 
-    console.log('\n[Suite 5/5] Security Remediation Phase 2 Direct Exploit Regression Suite...');
+    console.log('\n[Suite 5/6] Security Remediation Phase 2 Direct Exploit Regression Suite...');
     await server.ssrLoadModule('./server/__tests__/security_remediation_phase2.test.ts');
+
+    console.log('\n[Suite 6/7] Smart Campus Identity, Role Authorization & Anti-Escalation Suite...');
+    await server.ssrLoadModule('./server/__tests__/identity_role_security.test.ts');
+
+    console.log('\n[Suite 7/7] Smart Campus Security & Functionality Remediation Full Suite...');
+    await server.ssrLoadModule('./server/__tests__/security_remediation_full.test.ts');
 
     console.log('\n--- ALL TEST SUITES COMPLETED SUCCESSFULLY ---');
   } catch (err) {

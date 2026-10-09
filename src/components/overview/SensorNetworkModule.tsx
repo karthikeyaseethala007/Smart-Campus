@@ -83,7 +83,7 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
               justifyContent: 'center',
             }}
           >
-            <Activity size={14} color="#101820" />
+            <Activity size={14} color="var(--color-ink-black)" />
           </div>
           <div>
             <span
@@ -93,7 +93,7 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
                 fontWeight: 700,
                 letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                color: '#5B6871',
+                color: 'var(--color-slate-gray)',
               }}
             >
               SENSOR INTELLIGENCE
@@ -162,7 +162,7 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
                 fontFamily: "var(--font-mono, monospace)",
                 fontSize: '0.688rem',
                 fontWeight: 700,
-                color: mq2State === 'CRITICAL' ? '#FF0000' : mq2State === 'ELEVATED' ? '#FF8200' : '#5B6871',
+                color: mq2State === 'CRITICAL' ? '#FF0000' : mq2State === 'ELEVATED' ? '#FF8200' : 'var(--color-slate-gray)',
                 letterSpacing: '0.06em',
               }}
             >
@@ -181,13 +181,13 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
                   fontFamily: "var(--font-display, sans-serif)",
                   fontSize: '1.4rem',
                   fontWeight: 700,
-                  color: mq2State === 'CRITICAL' ? '#FF0000' : mq2State === 'ELEVATED' ? '#FF8200' : '#101820',
+                  color: mq2State === 'CRITICAL' ? '#FF0000' : mq2State === 'ELEVATED' ? '#FF8200' : 'var(--color-ink-black)',
                   lineHeight: 1,
                 }}
               >
                 {mq2Ppm}
               </span>
-              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', color: '#5B6871' }}>
+              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', color: 'var(--color-slate-gray)' }}>
                 ppm
               </span>
             </div>
@@ -236,28 +236,28 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', fontWeight: 700, color: '#5B6871', letterSpacing: '0.06em' }}>
+            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', fontWeight: 700, color: 'var(--color-slate-gray)', letterSpacing: '0.06em' }}>
               PIR OCCUPANCY
             </span>
-            <Radio size={14} color="#101820" />
+            <Radio size={14} color="var(--color-ink-black)" />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-            <span style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1.4rem', fontWeight: 700, color: '#101820', lineHeight: 1 }}>
+            <span style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1.4rem', fontWeight: 700, color: 'var(--color-ink-black)', lineHeight: 1 }}>
               {pirCount}
             </span>
-            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', color: '#5B6871' }}>
+            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', color: 'var(--color-slate-gray)' }}>
               Nodes Active
             </span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', fontFamily: "var(--font-mono, monospace)", color: '#8C8C8C' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', fontFamily: "var(--font-mono, monospace)", color: 'var(--color-slate-gray)' }}>
             <span>ZONE: ALL CAMPUS</span>
             <span style={{ color: '#22c55e', fontWeight: 600 }}>ARMED</span>
           </div>
 
           {/* Micro Visual Bar */}
-          <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(16, 24, 32, 0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+          <div style={{ width: '100%', height: '4px', backgroundColor: 'var(--border-subtle, rgba(16, 24, 32, 0.06))', borderRadius: '2px', overflow: 'hidden' }}>
             <div style={{ width: '100%', height: '100%', backgroundColor: '#22c55e', borderRadius: '2px' }} />
           </div>
         </div>
@@ -265,63 +265,63 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
         {/* Sensor 3: Ambient Temperature */}
         <div
           style={{
-            backgroundColor: '#FCFCFD',
+            backgroundColor: 'var(--color-mist-gray, #FCFCFD)',
             borderRadius: '10px',
             padding: '14px',
-            border: '1px solid rgba(16, 24, 32, 0.06)',
+            border: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.06))',
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', fontWeight: 700, color: '#5B6871', letterSpacing: '0.06em' }}>
+            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', fontWeight: 700, color: 'var(--color-slate-gray)', letterSpacing: '0.06em' }}>
               TEMPERATURE
             </span>
-            <Thermometer size={14} color="#101820" />
+            <Thermometer size={14} color="var(--color-ink-black)" />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-            <span style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1.4rem', fontWeight: 700, color: '#101820', lineHeight: 1 }}>
+            <span style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1.4rem', fontWeight: 700, color: 'var(--color-ink-black)', lineHeight: 1 }}>
               21.4°C
             </span>
-            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', color: '#5B6871' }}>
+            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', color: 'var(--color-slate-gray)' }}>
               Ambient
             </span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', fontFamily: "var(--font-mono, monospace)", color: '#8C8C8C' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', fontFamily: "var(--font-mono, monospace)", color: 'var(--color-slate-gray)' }}>
             <span>TARGET: 21.0°C</span>
             <span style={{ color: '#22c55e' }}>STABLE</span>
           </div>
 
           {/* Micro Visual Bar */}
-          <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(16, 24, 32, 0.06)', borderRadius: '2px', overflow: 'hidden' }}>
-            <div style={{ width: '70%', height: '100%', backgroundColor: '#101820', borderRadius: '2px' }} />
+          <div style={{ width: '100%', height: '4px', backgroundColor: 'var(--border-subtle, rgba(16, 24, 32, 0.06))', borderRadius: '2px', overflow: 'hidden' }}>
+            <div style={{ width: '70%', height: '100%', backgroundColor: 'var(--color-ink-black)', borderRadius: '2px' }} />
           </div>
         </div>
 
         {/* Sensor 4: Energy Submeter Load */}
         <div
           style={{
-            backgroundColor: '#FCFCFD',
+            backgroundColor: 'var(--color-mist-gray, #FCFCFD)',
             borderRadius: '10px',
             padding: '14px',
-            border: '1px solid rgba(16, 24, 32, 0.06)',
+            border: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.06))',
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', fontWeight: 700, color: '#5B6871', letterSpacing: '0.06em' }}>
+            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', fontWeight: 700, color: 'var(--color-slate-gray)', letterSpacing: '0.06em' }}>
               ENERGY METER
             </span>
             <Zap size={14} color="#FF8200" />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-            <span style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1.4rem', fontWeight: 700, color: '#101820', lineHeight: 1 }}>
+            <span style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1.4rem', fontWeight: 700, color: 'var(--color-ink-black)', lineHeight: 1 }}>
               {totalDemandKw}
             </span>
             <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', color: '#FF8200', fontWeight: 600 }}>
@@ -329,13 +329,13 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
             </span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', fontFamily: "var(--font-mono, monospace)", color: '#8C8C8C' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', fontFamily: "var(--font-mono, monospace)", color: 'var(--color-slate-gray)' }}>
             <span>BASE: 54.0 kW</span>
             <span style={{ color: '#FF8200' }}>+1.57%</span>
           </div>
 
           {/* Micro Visual Bar */}
-          <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(16, 24, 32, 0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+          <div style={{ width: '100%', height: '4px', backgroundColor: 'var(--border-subtle, rgba(16, 24, 32, 0.06))', borderRadius: '2px', overflow: 'hidden' }}>
             <div style={{ width: '56%', height: '100%', backgroundColor: '#FF8200', borderRadius: '2px' }} />
           </div>
         </div>
@@ -361,7 +361,7 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
             fontFamily: "var(--font-mono, monospace)",
             fontSize: '0.625rem',
             fontWeight: 700,
-            color: '#5B6871',
+            color: 'var(--color-slate-gray)',
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
           }}
@@ -377,7 +377,7 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
               fontSize: '0.625rem',
               fontFamily: "var(--font-mono, monospace)",
               fontWeight: 600,
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface-canvas, #FFFFFF)',
               border: '1px solid rgba(255, 130, 0, 0.4)',
               color: '#FF8200',
               borderRadius: '4px',
@@ -399,7 +399,7 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
               fontSize: '0.625rem',
               fontFamily: "var(--font-mono, monospace)",
               fontWeight: 600,
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface-canvas, #FFFFFF)',
               border: '1px solid rgba(255, 0, 0, 0.4)',
               color: '#FF0000',
               borderRadius: '4px',
@@ -421,9 +421,9 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
               fontSize: '0.625rem',
               fontFamily: "var(--font-mono, monospace)",
               fontWeight: 600,
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface-canvas, #FFFFFF)',
               border: '1px solid rgba(16, 24, 32, 0.15)',
-              color: '#101820',
+              color: 'var(--color-ink-black)',
               borderRadius: '4px',
               cursor: 'pointer',
               display: 'flex',
@@ -432,7 +432,7 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
             }}
             title="Recalibrate gas sensor to baseline 312 ppm"
           >
-            <RefreshCw size={11} color="#5B6871" />
+            <RefreshCw size={11} color="var(--color-slate-gray)" />
             <span>RESET (312 ppm)</span>
           </button>
 
@@ -443,9 +443,9 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
               fontSize: '0.625rem',
               fontFamily: "var(--font-mono, monospace)",
               fontWeight: 600,
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface-canvas, #FFFFFF)',
               border: '1px solid rgba(16, 24, 32, 0.15)',
-              color: '#5B6871',
+              color: 'var(--color-slate-gray)',
               borderRadius: '4px',
               cursor: 'pointer',
             }}
@@ -457,7 +457,7 @@ export const SensorNetworkModule: React.FC<SensorNetworkModuleProps> = ({ onNavi
       </div>
 
       {/* Footer Status Link */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.688rem', fontFamily: "var(--font-mono, monospace)", color: '#5B6871', paddingTop: '10px', borderTop: '1px solid rgba(16, 24, 32, 0.06)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.688rem', fontFamily: "var(--font-mono, monospace)", color: 'var(--color-slate-gray)', paddingTop: '10px', borderTop: '1px solid rgba(16, 24, 32, 0.06)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <CheckCircle2 size={12} color="#22c55e" />
           <span>MODBUS RS485 TELEMETRY LOOP SYNCHRONIZED</span>

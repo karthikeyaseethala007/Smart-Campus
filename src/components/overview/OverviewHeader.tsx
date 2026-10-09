@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Clock, Bell, User, ChevronDown, Check, Search } from 'lucide-react';
+import { Shield, Clock, Bell, ChevronDown, Search, ShieldCheck, LogOut } from 'lucide-react';
 import { useAppState } from '../../services/stateContext';
-import type { UserRole } from '../../types';
+import { getHumanReadableRole } from '../../services/authService';
 
 export const OverviewHeader: React.FC = () => {
   const {
     campusStatus,
     userRole,
-    setUserRole,
+    authSession,
+    logout,
     alerts,
     setActiveTab,
     isSystemDegraded,
@@ -43,15 +44,6 @@ export const OverviewHeader: React.FC = () => {
   const isEmergency = campusStatus === 'EMERGENCY';
   const unreadAlerts = alerts.filter((a) => !a.acknowledged).length;
 
-  const roles: { key: UserRole; label: string; desc: string }[] = [
-    { key: 'admin', label: 'Administrator', desc: 'Full system & hardware privileges' },
-    { key: 'security_officer', label: 'Security Officer', desc: 'Alerts, CCTV, doors, emergency' },
-    { key: 'faculty', label: 'Faculty Member', desc: 'Zone occupancy & schedule access' },
-    { key: 'student', label: 'Student', desc: 'Read-only campus status' },
-  ];
-
-  const currentRoleObj = roles.find((r) => r.key === userRole) || roles[0];
-
   return (
     <header
       role="banner"
@@ -79,20 +71,20 @@ export const OverviewHeader: React.FC = () => {
               fontWeight: 700,
               letterSpacing: '0.16em',
               textTransform: 'uppercase',
-              color: '#5B6871',
+              color: 'var(--color-slate-gray)',
             }}
           >
-            <Shield size={13} color="#101820" />
+            <Shield size={13} color="var(--color-ink-black)" />
             <span>SMART CAMPUS</span>
-            <span style={{ color: 'rgba(16, 24, 32, 0.25)' }}>/</span>
-            <span style={{ color: '#101820' }}>COMMAND CENTER</span>
+            <span style={{ color: 'var(--color-slate-gray)', opacity: 0.5 }}>/</span>
+            <span style={{ color: 'var(--color-ink-black)' }}>COMMAND CENTER</span>
           </div>
 
           <div
             style={{
               fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
               fontSize: '0.75rem',
-              color: '#5B6871',
+              color: 'var(--color-slate-gray)',
               marginTop: '4px',
             }}
           >
@@ -178,25 +170,25 @@ export const OverviewHeader: React.FC = () => {
             gap: '8px',
             padding: '6px 12px',
             borderRadius: '8px',
-            backgroundColor: '#FFFFFF',
-            border: '1px solid rgba(16, 24, 32, 0.1)',
+            backgroundColor: 'var(--surface-canvas, #FFFFFF)',
+            border: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.1))',
             cursor: 'pointer',
             fontFamily: "var(--font-mono, monospace)",
             fontSize: '0.688rem',
-            color: '#101820',
+            color: 'var(--color-ink-black)',
             fontWeight: 600,
           }}
           title="Open Command Palette (⌘K)"
         >
-          <Search size={12} color="#5B6871" />
+          <Search size={12} color="var(--color-slate-gray)" />
           <span>COMMANDS</span>
           <kbd
             style={{
               fontSize: '10px',
               padding: '1px 5px',
               borderRadius: '4px',
-              backgroundColor: 'rgba(16, 24, 32, 0.06)',
-              color: '#5B6871',
+              backgroundColor: 'var(--border-subtle, rgba(16, 24, 32, 0.06))',
+              color: 'var(--color-slate-gray)',
               fontWeight: 700,
             }}
           >
@@ -213,15 +205,15 @@ export const OverviewHeader: React.FC = () => {
             gap: '6px',
             padding: '6px 14px',
             borderRadius: '8px',
-            backgroundColor: '#FFFFFF',
-            border: '1px solid rgba(16, 24, 32, 0.08)',
+            backgroundColor: 'var(--surface-canvas, #FFFFFF)',
+            border: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.08))',
             fontFamily: "var(--font-mono, monospace)",
             fontSize: '0.688rem',
-            color: '#5B6871',
+            color: 'var(--color-slate-gray)',
             letterSpacing: '0.04em',
           }}
         >
-          <Clock size={12} color="#8C8C8C" />
+          <Clock size={12} color="var(--color-slate-gray)" />
           <span>{currentTime || 'OCT 26, 2026 · 08:45:00 UTC'}</span>
         </div>
 
@@ -234,21 +226,21 @@ export const OverviewHeader: React.FC = () => {
             gap: '6px',
             padding: '6px 12px',
             borderRadius: '8px',
-            backgroundColor: unreadAlerts > 0 ? 'rgba(255, 130, 0, 0.08)' : '#FFFFFF',
-            border: unreadAlerts > 0 ? '1px solid rgba(255, 130, 0, 0.3)' : '1px solid rgba(16, 24, 32, 0.08)',
+            backgroundColor: unreadAlerts > 0 ? 'rgba(255, 130, 0, 0.08)' : 'var(--surface-canvas, #FFFFFF)',
+            border: unreadAlerts > 0 ? '1px solid rgba(255, 130, 0, 0.3)' : '1px solid var(--border-subtle, rgba(16, 24, 32, 0.08))',
             cursor: 'pointer',
             fontFamily: "var(--font-mono, monospace)",
             fontSize: '0.688rem',
-            color: unreadAlerts > 0 ? '#FF8200' : '#5B6871',
+            color: unreadAlerts > 0 ? '#FF8200' : 'var(--color-slate-gray)',
             fontWeight: 600,
           }}
           title="Campus Incident & Alert Ledger"
         >
-          <Bell size={12} color={unreadAlerts > 0 ? '#FF8200' : '#8C8C8C'} />
+          <Bell size={12} color={unreadAlerts > 0 ? '#FF8200' : 'var(--color-slate-gray)'} />
           <span>{unreadAlerts} ALERTS</span>
         </button>
 
-        {/* Profile / Role Switcher Minimal Control */}
+        {/* Active Session Clearance Indicator & Session Popover */}
         <div style={{ position: 'relative' }}>
           <button
             onClick={() => setIsRoleMenuOpen(!isRoleMenuOpen)}
@@ -258,21 +250,21 @@ export const OverviewHeader: React.FC = () => {
               gap: '8px',
               padding: '6px 12px',
               borderRadius: '8px',
-              backgroundColor: '#FFFFFF',
-              border: '1px solid rgba(16, 24, 32, 0.12)',
+              backgroundColor: 'var(--surface-canvas, #FFFFFF)',
+              border: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.12))',
               cursor: 'pointer',
               fontFamily: "var(--font-mono, monospace)",
               fontSize: '0.688rem',
-              color: '#101820',
+              color: 'var(--color-ink-black)',
               fontWeight: 600,
             }}
           >
-            <User size={12} color="#5B6871" />
-            <span>ROLE: {currentRoleObj.label.toUpperCase()}</span>
-            <ChevronDown size={11} color="#8C8C8C" />
+            <ShieldCheck size={12} color="#10B981" />
+            <span>CLEARANCE: {getHumanReadableRole(userRole).toUpperCase()}</span>
+            <ChevronDown size={11} color="var(--color-slate-gray)" />
           </button>
 
-          {/* Role Dropdown */}
+          {/* Active Session Details Popover */}
           {isRoleMenuOpen && (
             <div
               style={{
@@ -280,85 +272,101 @@ export const OverviewHeader: React.FC = () => {
                 top: 'calc(100% + 6px)',
                 right: 0,
                 width: '260px',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: 'var(--surface-card-mist, #FFFFFF)',
                 borderRadius: '12px',
-                border: '1px solid rgba(16, 24, 32, 0.12)',
-                boxShadow: '0 12px 32px rgba(16, 24, 32, 0.12)',
-                padding: '6px',
+                border: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.12))',
+                boxShadow: 'var(--shadow-subtle-2, 0 12px 32px rgba(16, 24, 32, 0.12))',
+                padding: '12px',
                 zIndex: 1000,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '2px',
+                gap: '8px',
               }}
             >
               <div
                 style={{
-                  padding: '8px 10px',
-                  fontFamily: "var(--font-mono, monospace)",
-                  fontSize: '0.625rem',
-                  fontWeight: 700,
-                  color: '#8C8C8C',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  borderBottom: '1px solid rgba(16, 24, 32, 0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingBottom: '6px',
+                  borderBottom: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.06))',
                 }}
               >
-                Select Operational Role (RBAC)
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono, monospace)",
+                    fontSize: '0.625rem',
+                    fontWeight: 700,
+                    color: 'var(--color-slate-gray)',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  ACTIVE SESSION
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.625rem', color: '#059669', fontWeight: 600 }}>
+                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#10B981' }} />
+                  Authenticated
+                </span>
               </div>
 
-              {roles.map((r) => {
-                const isSelected = r.key === userRole;
-                return (
-                  <button
-                    key={r.key}
-                    onClick={() => {
-                      setUserRole(r.key);
-                      setIsRoleMenuOpen(false);
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      backgroundColor: isSelected ? 'rgba(16, 24, 32, 0.05)' : 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      width: '100%',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(16, 24, 32, 0.02)';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          fontFamily: "var(--font-display, sans-serif)",
-                          fontSize: '0.813rem',
-                          fontWeight: 600,
-                          color: '#101820',
-                        }}
-                      >
-                        {r.label}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.688rem',
-                          color: '#5B6871',
-                          marginTop: '2px',
-                        }}
-                      >
-                        {r.desc}
-                      </div>
-                    </div>
-                    {isSelected && <Check size={14} color="#FF8200" />}
-                  </button>
-                );
-              })}
+              <div>
+                <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '0.813rem', fontWeight: 600, color: 'var(--color-ink-black)' }}>
+                  {authSession?.name || 'Chief Administrator Ramanujan'}
+                </div>
+                <div style={{ fontSize: '0.688rem', color: 'var(--color-slate-gray)', marginTop: '2px' }}>
+                  {authSession?.email || `${authSession?.username || 'admin'}@campus.internal`}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  backgroundColor: 'var(--surface-section-fog, rgba(16, 24, 32, 0.04))',
+                  borderRadius: '6px',
+                  padding: '6px 8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px',
+                }}
+              >
+                <div style={{ fontSize: '0.625rem', color: 'var(--color-slate-gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  CLEARANCE
+                </div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-ink-black)' }}>
+                  {getHumanReadableRole(userRole)}
+                </div>
+                <div style={{ fontSize: '0.625rem', color: 'var(--color-slate-gray)' }}>
+                  Badge: {authSession?.badgeNumber || 'BADGE-ADM-001'} · {authSession?.clearanceLevel || 'LEVEL_4_CHIEF'}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '4px', borderTop: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.06))' }}>
+                <button
+                  onClick={async () => {
+                    setIsRoleMenuOpen(false);
+                    await logout();
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    borderRadius: '6px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.75rem',
+                    color: '#B91C1C',
+                    fontWeight: 500,
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <LogOut size={12} color="#B91C1C" />
+                  <span>Logout</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

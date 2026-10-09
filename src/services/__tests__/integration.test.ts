@@ -1,4 +1,4 @@
-import test, { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
 
 import { eventBus } from '../eventBus';

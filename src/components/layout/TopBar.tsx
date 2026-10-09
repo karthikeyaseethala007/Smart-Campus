@@ -6,17 +6,20 @@ import {
   ChevronDown,
   Radio,
   Flame,
-  AlertTriangle
+  AlertTriangle,
+  ShieldCheck,
+  LogOut,
 } from 'lucide-react';
 import { useAppState } from '../../services/stateContext';
-import type { UserRole } from '../../types';
+import { getHumanReadableRole } from '../../services/authService';
 import { AnimatedList } from '../ui/animated-list';
 import { ThemeToggle } from '../ui/theme-toggle';
 
 export const TopBar: React.FC = () => {
   const {
     userRole,
-    setUserRole,
+    authSession,
+    logout,
     isSimulationActive,
     alerts,
     setActiveTab,
@@ -25,17 +28,10 @@ export const TopBar: React.FC = () => {
     setIsCommandPaletteOpen,
   } = useAppState();
 
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   const unreadAlerts = alerts.filter(a => !a.acknowledged);
-
-  const roles: { key: UserRole; label: string; desc: string }[] = [
-    { key: 'admin', label: 'Administrator', desc: 'Full system & hardware privileges' },
-    { key: 'security_officer', label: 'Security Officer', desc: 'Alerts, CCTV, doors, emergency' },
-    { key: 'faculty', label: 'Faculty Member', desc: 'Zone occupancy & schedule access' },
-    { key: 'student', label: 'Student', desc: 'Read-only campus status' }
-  ];
 
   return (
     <header
@@ -299,84 +295,183 @@ export const TopBar: React.FC = () => {
           {/* Skiper26 Global Light/Dark Mode Toggle */}
           <ThemeToggle />
 
-          {/* Minimalist Role Switcher */}
+          {/* Top-Right Authenticated Account Identity Control */}
           <div style={{ position: 'relative' }}>
             <button
-              onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+              onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
               className="pill-btn-ghost topbar-role-btn"
+              aria-label="Account Identity and Clearance"
               style={{
                 padding: '6px 14px',
                 fontSize: '13px',
                 gap: '8px',
-                borderColor: 'rgba(23, 25, 28, 0.15)'
+                borderColor: 'rgba(23, 25, 28, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
               <div
                 style={{
-                  width: '20px',
-                  height: '20px',
+                  width: '22px',
+                  height: '22px',
                   borderRadius: '9999px',
                   backgroundColor: 'var(--color-ink-black)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '10px',
-                  fontWeight: 600
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  flexShrink: 0,
                 }}
               >
-                {userRole.charAt(0).toUpperCase()}
+                {authSession?.name ? authSession.name.charAt(0).toUpperCase() : 'A'}
               </div>
-              <span className="topbar-role-label" style={{ textTransform: 'capitalize', color: 'var(--color-ink-black)' }}>
-                {roles.find(r => r.key === userRole)?.label || userRole}
-              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
+                <span className="topbar-role-label" style={{ fontWeight: 600, color: 'var(--color-ink-black)' }}>
+                  {authSession?.name || 'Chief Administrator Ramanujan'}
+                </span>
+                <span style={{ fontSize: '10px', color: 'var(--color-slate-gray)' }}>
+                  {getHumanReadableRole(userRole)}
+                </span>
+              </div>
               <ChevronDown size={13} color="var(--color-slate-gray)" />
             </button>
 
-            {isRoleDropdownOpen && (
+            {isAccountMenuOpen && (
               <div
                 style={{
                   position: 'absolute',
                   top: '46px',
                   right: 0,
-                  width: '240px',
+                  width: '280px',
                   backgroundColor: 'var(--color-paper-white)',
                   borderRadius: 'var(--radius-elevatedcards)',
                   boxShadow: 'var(--shadow-subtle-2)',
                   border: 'var(--border-hairline)',
-                  padding: '8px',
-                  zIndex: 200
+                  padding: '12px',
+                  zIndex: 200,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
                 }}
               >
-                <div style={{ padding: '8px 12px 6px', fontSize: '11px', color: 'var(--color-ash-gray)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Role-Based Clearance
+                {/* Header: ACCOUNT & STATUS */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '6px', borderBottom: 'var(--border-hairline)' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--color-ash-gray)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+                    ACCOUNT
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#059669', fontWeight: 600 }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }} /> Authenticated
+                  </span>
                 </div>
-                {roles.map(r => (
+
+                {/* Account Details */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--color-ink-black)',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {authSession?.name ? authSession.name.charAt(0).toUpperCase() : 'A'}
+                  </div>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-ink-black)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      {authSession?.name || 'Chief Administrator Ramanujan'}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--color-slate-gray)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      {authSession?.email || `${authSession?.username || 'admin'}@campus.internal`}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Clearance Info Card */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--color-mist-gray)',
+                    borderRadius: '8px',
+                    padding: '8px 10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '2px',
+                  }}
+                >
+                  <span style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-slate-gray)', fontWeight: 600 }}>
+                    CLEARANCE
+                  </span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-ink-black)' }}>
+                    {getHumanReadableRole(userRole)}
+                  </span>
+                  <span style={{ fontSize: '10px', color: 'var(--color-ash-gray)' }}>
+                    Badge: {authSession?.badgeNumber || 'BADGE-ADM-001'} · {authSession?.clearanceLevel || 'LEVEL_4_CHIEF'}
+                  </span>
+                </div>
+
+                {/* Functional Actions */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '4px', borderTop: 'var(--border-hairline)' }}>
                   <button
-                    key={r.key}
                     onClick={() => {
-                      setUserRole(r.key);
-                      setIsRoleDropdownOpen(false);
+                      setActiveTab('security');
+                      setIsAccountMenuOpen(false);
                     }}
                     style={{
                       width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '12px',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
                       textAlign: 'left',
-                      backgroundColor: userRole === r.key ? 'var(--color-mist-gray)' : 'transparent',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
                       display: 'flex',
-                      flexDirection: 'column',
-                      gap: '2px'
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '12px',
+                      color: 'var(--color-ink-black)',
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-mist-gray)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
-                    <span style={{ fontSize: '13px', fontWeight: userRole === r.key ? 500 : 400, color: 'var(--color-ink-black)' }}>
-                      {r.label}
-                    </span>
-                    <span style={{ fontSize: '11px', color: 'var(--color-slate-gray)' }}>
-                      {r.desc}
-                    </span>
+                    <ShieldCheck size={14} color="var(--color-slate-gray)" />
+                    <span>Security & access</span>
                   </button>
-                ))}
+
+                  <button
+                    onClick={async () => {
+                      setIsAccountMenuOpen(false);
+                      await logout();
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      textAlign: 'left',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '12px',
+                      color: '#B91C1C',
+                      fontWeight: 500,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <LogOut size={14} color="#B91C1C" />
+                    <span>Logout</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>

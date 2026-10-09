@@ -195,9 +195,9 @@ export class CampusWebSocketServer {
     const payload = JSON.stringify(event);
     this.clients.forEach((meta, ws) => {
       if (ws.readyState === WebSocket.OPEN) {
-        // Enforce channel permissions if event is sensitive
-        if (event.category === 'SYSTEM' && event.type === 'AUDIT_RECORD' && meta.role === 'student') {
-          return; // Student cannot receive raw security audit events
+        // Enforce channel permissions: Students must not receive security lockouts or raw audit events (Phase 8)
+        if ((event.type === 'SECURITY_LOCKOUT' || (event.category === 'SYSTEM' && event.type === 'AUDIT_RECORD')) && meta.role === 'student') {
+          return;
         }
 
         try {

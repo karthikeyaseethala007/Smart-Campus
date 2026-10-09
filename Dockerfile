@@ -9,7 +9,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copy dependency manifests
-COPY package.json pnpm-lock.yaml* package-lock.json* ./
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* package-lock.json* ./
 
 # Install dependencies
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -46,4 +46,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-CMD ["node", "--loader", "ts-node/esm", "server/index.ts"]
+CMD ["node", "--import", "tsx/esm", "server/index.ts"]

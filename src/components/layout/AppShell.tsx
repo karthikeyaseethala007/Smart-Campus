@@ -59,7 +59,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             gap: '3px',
             background: 'none',
             border: 'none',
-            color: activeTab === 'overview' ? '#101820' : '#8A8F8D',
+            color: activeTab === 'overview' ? 'var(--color-ink-black)' : 'var(--color-slate-gray)',
             fontWeight: activeTab === 'overview' ? 600 : 400,
             fontSize: '10px',
             fontFamily: "var(--font-mono, monospace)",
@@ -67,7 +67,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             padding: '4px',
           }}
         >
-          <LayoutDashboard size={18} color={activeTab === 'overview' ? '#101820' : '#8A8F8D'} />
+          <LayoutDashboard size={18} color={activeTab === 'overview' ? 'var(--color-ink-black)' : 'var(--color-slate-gray)'} />
           <span>OVERVIEW</span>
         </button>
 
@@ -80,7 +80,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             gap: '3px',
             background: 'none',
             border: 'none',
-            color: activeTab === 'monitoring' ? '#101820' : '#8A8F8D',
+            color: activeTab === 'monitoring' ? 'var(--color-ink-black)' : 'var(--color-slate-gray)',
             fontWeight: activeTab === 'monitoring' ? 600 : 400,
             fontSize: '10px',
             fontFamily: "var(--font-mono, monospace)",
@@ -88,7 +88,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             padding: '4px',
           }}
         >
-          <Video size={18} color={activeTab === 'monitoring' ? '#101820' : '#8A8F8D'} />
+          <Video size={18} color={activeTab === 'monitoring' ? 'var(--color-ink-black)' : 'var(--color-slate-gray)'} />
           <span>SURVEIL</span>
         </button>
 
@@ -101,7 +101,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             gap: '3px',
             background: 'none',
             border: 'none',
-            color: activeTab === 'security' ? '#101820' : '#8A8F8D',
+            color: activeTab === 'security' ? 'var(--color-ink-black)' : 'var(--color-slate-gray)',
             fontWeight: activeTab === 'security' ? 600 : 400,
             fontSize: '10px',
             fontFamily: "var(--font-mono, monospace)",
@@ -109,7 +109,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             padding: '4px',
           }}
         >
-          <Lock size={18} color={activeTab === 'security' ? '#101820' : '#8A8F8D'} />
+          <Lock size={18} color={activeTab === 'security' ? 'var(--color-ink-black)' : 'var(--color-slate-gray)'} />
           <span>ACCESS</span>
         </button>
 
@@ -122,7 +122,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             gap: '3px',
             background: 'none',
             border: 'none',
-            color: activeTab === 'incidents' ? '#101820' : '#8A8F8D',
+            color: activeTab === 'incidents' ? 'var(--color-ink-black)' : 'var(--color-slate-gray)',
             fontWeight: activeTab === 'incidents' ? 600 : 400,
             fontSize: '10px',
             fontFamily: "var(--font-mono, monospace)",
@@ -132,7 +132,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           }}
         >
           <div style={{ position: 'relative' }}>
-            <FileText size={18} color={activeTab === 'incidents' ? '#101820' : '#8A8F8D'} />
+            <FileText size={18} color={activeTab === 'incidents' ? 'var(--color-ink-black)' : 'var(--color-slate-gray)'} />
             {openIncidentsCount > 0 && (
               <span
                 style={{

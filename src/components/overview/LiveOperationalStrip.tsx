@@ -53,7 +53,7 @@ export const LiveOperationalStrip: React.FC = () => {
   const signals = [
     {
       id: 'sig-cctv',
-      icon: <Video size={13} color="#101820" />,
+      icon: <Video size={13} color="var(--color-ink-black)" />,
       label: 'CCTV',
       value: cctvStatus,
       detail: `${totalCams} Nodes Active`,
@@ -62,7 +62,7 @@ export const LiveOperationalStrip: React.FC = () => {
     },
     {
       id: 'sig-access',
-      icon: <Lock size={13} color="#101820" />,
+      icon: <Lock size={13} color="var(--color-ink-black)" />,
       label: 'ACCESS',
       value: accessStatus,
       detail: `${lockedDoors}/${totalDoors} Armed`,
@@ -71,7 +71,7 @@ export const LiveOperationalStrip: React.FC = () => {
     },
     {
       id: 'sig-pir',
-      icon: <Radio size={13} color="#101820" />,
+      icon: <Radio size={13} color="var(--color-ink-black)" />,
       label: 'PIR',
       value: pirStatus,
       detail: '42 Array Nodes',
@@ -80,7 +80,7 @@ export const LiveOperationalStrip: React.FC = () => {
     },
     {
       id: 'sig-mq2',
-      icon: <Flame size={13} color={mq2Status === 'NORMAL' ? '#101820' : '#FF8200'} />,
+      icon: <Flame size={13} color={mq2Status === 'NORMAL' ? 'var(--color-ink-black)' : '#FF8200'} />,
       label: 'MQ-2',
       value: mq2Status,
       detail: mq2Ppm,
@@ -101,7 +101,7 @@ export const LiveOperationalStrip: React.FC = () => {
     },
     {
       id: 'sig-iot',
-      icon: <Cpu size={13} color="#101820" />,
+      icon: <Cpu size={13} color="var(--color-ink-black)" />,
       label: 'IoT',
       value: iotStatus,
       detail: `${totalDevices - onlineDevices} Faults`,
@@ -131,7 +131,7 @@ export const LiveOperationalStrip: React.FC = () => {
                 width: '26px',
                 height: '26px',
                 borderRadius: '6px',
-                backgroundColor: 'rgba(16, 24, 32, 0.04)',
+                backgroundColor: 'var(--color-surface-sunken)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -148,7 +148,7 @@ export const LiveOperationalStrip: React.FC = () => {
                   fontWeight: 700,
                   letterSpacing: '0.12em',
                   textTransform: 'uppercase',
-                  color: '#5B6871'
+                  color: 'var(--color-slate-gray)'
                 }}
               >
                 {sig.label}
@@ -157,7 +157,7 @@ export const LiveOperationalStrip: React.FC = () => {
                 style={{
                   fontSize: '0.625rem',
                   fontFamily: "var(--font-mono, monospace)",
-                  color: '#8A8F8D',
+                  color: 'var(--color-slate-gray)',
                   marginTop: '1px'
                 }}
               >
@@ -173,7 +173,7 @@ export const LiveOperationalStrip: React.FC = () => {
                 fontFamily: "var(--font-mono, monospace)",
                 fontSize: '0.75rem',
                 fontWeight: 700,
-                color: sig.statusColor === '#FF0000' ? '#FF0000' : sig.statusColor === '#FF8200' ? '#FF8200' : '#101820',
+                color: sig.statusColor === '#FF0000' ? '#FF0000' : sig.statusColor === '#FF8200' ? '#FF8200' : 'var(--color-ink-black)',
                 letterSpacing: '0.04em'
               }}
             >

@@ -12,9 +12,11 @@ import {
   Users, 
   Settings,
   ShieldCheck,
-  Radio
+  Radio,
+  LogOut,
 } from 'lucide-react';
 import { useAppState } from '../../services/stateContext';
+import { getHumanReadableRole } from '../../services/authService';
 import type { NavigationTab } from '../../types';
 
 interface NavItem {
@@ -26,7 +28,7 @@ interface NavItem {
 }
 
 export const Sidebar: React.FC = () => {
-  const { activeTab, setActiveTab, userRole, isSimulationActive, alerts, incidents } = useAppState();
+  const { activeTab, setActiveTab, userRole, authSession, logout, isSimulationActive, alerts, incidents } = useAppState();
 
   const openIncidentsCount = incidents.filter(i => i.status === 'open').length;
   const criticalAlertsCount = alerts.filter(a => a.severity === 'critical' && !a.acknowledged).length;
@@ -188,7 +190,7 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
-      {/* Footer System Clearance Status */}
+      {/* Footer System Clearance Status - Upgraded Active Session Panel */}
       <div 
         style={{
           borderTop: 'var(--border-hairline)',
@@ -204,19 +206,53 @@ export const Sidebar: React.FC = () => {
             backgroundColor: 'var(--color-mist-gray)',
             borderRadius: 'var(--radius-smallcards)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
+            flexDirection: 'column',
+            gap: '8px'
           }}
         >
-          <ShieldCheck size={16} color="var(--color-ink-black)" style={{ flexShrink: 0 }} />
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--color-slate-gray)' }}>
-              Active Clearance
-            </div>
-            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-ink-black)', textTransform: 'capitalize' }}>
-              {userRole.replace('_', ' ')}
-            </div>
+          {/* Active Session Header & Authenticated Status */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--color-ash-gray)', textTransform: 'uppercase' }}>
+              ACTIVE SESSION
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#059669', fontWeight: 600 }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }} />
+              Authenticated
+            </span>
           </div>
+
+          {/* Authenticated User Display Name */}
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-ink-black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {authSession?.name || 'Chief Administrator Ramanujan'}
+          </div>
+
+          {/* Role Display Name */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--color-slate-gray)' }}>
+            <ShieldCheck size={13} color="var(--color-ink-black)" style={{ flexShrink: 0 }} />
+            <span style={{ fontWeight: 500, color: 'var(--color-ink-black)' }}>
+              {getHumanReadableRole(userRole)}
+            </span>
+          </div>
+
+          {/* Logout Action */}
+          <button
+            onClick={logout}
+            className="pill-btn-ghost"
+            style={{
+              marginTop: '4px',
+              width: '100%',
+              padding: '6px 10px',
+              fontSize: '11px',
+              justifyContent: 'center',
+              gap: '6px',
+              borderColor: 'rgba(23, 25, 28, 0.12)',
+              color: 'var(--color-ink-black)',
+              cursor: 'pointer',
+            }}
+          >
+            <LogOut size={12} color="var(--color-slate-gray)" />
+            <span>Logout</span>
+          </button>
         </div>
 
         {isSimulationActive && (

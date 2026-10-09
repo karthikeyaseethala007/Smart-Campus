@@ -105,13 +105,13 @@ export const CampusPulseGraph: React.FC<CampusPulseGraphProps> = ({ onNavigate }
               fontWeight: 700,
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
-              color: '#5B6871',
+              color: 'var(--color-slate-gray)',
               marginBottom: '6px',
             }}
           >
             <Activity size={13} color="#FF8200" />
             <span>CAMPUS PULSE</span>
-            <span style={{ color: 'rgba(16, 24, 32, 0.25)' }}>·</span>
+            <span style={{ color: 'var(--color-slate-gray)', opacity: 0.5 }}>·</span>
             <span>24-HOUR TELEMETRY DEMAND</span>
           </div>
 
@@ -120,7 +120,7 @@ export const CampusPulseGraph: React.FC<CampusPulseGraphProps> = ({ onNavigate }
               fontFamily: "var(--font-display, 'Outfit', sans-serif)",
               fontSize: '1.5rem',
               fontWeight: 600,
-              color: '#101820',
+              color: 'var(--color-ink-black)',
               margin: 0,
               letterSpacing: '-0.025em',
             }}
@@ -149,7 +149,7 @@ export const CampusPulseGraph: React.FC<CampusPulseGraphProps> = ({ onNavigate }
                 fontFamily: "var(--font-display, 'Outfit', sans-serif)",
                 fontSize: '1.625rem',
                 fontWeight: 600,
-                color: '#5B6871',
+                color: 'var(--color-slate-gray)',
                 lineHeight: 1.1,
               }}
             >
@@ -189,7 +189,7 @@ export const CampusPulseGraph: React.FC<CampusPulseGraphProps> = ({ onNavigate }
                 fontFamily: "var(--font-display, 'Outfit', sans-serif)",
                 fontSize: '1.625rem',
                 fontWeight: 700,
-                color: '#101820',
+                color: 'var(--color-ink-black)',
                 lineHeight: 1.1,
               }}
             >
@@ -265,7 +265,7 @@ export const CampusPulseGraph: React.FC<CampusPulseGraphProps> = ({ onNavigate }
           <path
             d={pathD}
             fill="none"
-            stroke="#101820"
+            stroke="var(--color-ink-black)"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -310,13 +310,13 @@ export const CampusPulseGraph: React.FC<CampusPulseGraphProps> = ({ onNavigate }
               width="104"
               height="20"
               rx="4"
-              fill="#101820"
+              fill="var(--color-ink-black)"
             />
             <text
               x={currentPt.x}
               y={currentPt.y - 14}
               textAnchor="middle"
-              fill="#FFFFFF"
+              fill="var(--color-paper-white)"
               fontFamily="var(--font-mono, monospace)"
               fontSize="10"
               fontWeight="600"
@@ -360,24 +360,24 @@ export const CampusPulseGraph: React.FC<CampusPulseGraphProps> = ({ onNavigate }
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Thermometer size={16} color="#101820" />
+          <Thermometer size={16} color="var(--color-ink-black)" />
           <div>
-            <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: '#8C8C8C', textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: 'var(--color-slate-gray)', textTransform: 'uppercase' }}>
               AMBIENT SETPOINT
             </div>
-            <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1rem', fontWeight: 600, color: '#101820' }}>
+            <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1rem', fontWeight: 600, color: 'var(--color-ink-black)' }}>
               21.4°C · Nominal
             </div>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Droplets size={16} color="#5B6871" />
+          <Droplets size={16} color="var(--color-slate-gray)" />
           <div>
-            <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: '#8C8C8C', textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: 'var(--color-slate-gray)', textTransform: 'uppercase' }}>
               RELATIVE HUMIDITY
             </div>
-            <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1rem', fontWeight: 600, color: '#101820' }}>
+            <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1rem', fontWeight: 600, color: 'var(--color-ink-black)' }}>
               46% RH · Balanced
             </div>
           </div>
@@ -386,7 +386,7 @@ export const CampusPulseGraph: React.FC<CampusPulseGraphProps> = ({ onNavigate }
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Wind size={16} color="#22c55e" />
           <div>
-            <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: '#8C8C8C', textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: 'var(--color-slate-gray)', textTransform: 'uppercase' }}>
               INDOOR AIR QUALITY
             </div>
             <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1rem', fontWeight: 600, color: '#22c55e' }}>
@@ -398,10 +398,10 @@ export const CampusPulseGraph: React.FC<CampusPulseGraphProps> = ({ onNavigate }
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Cpu size={16} color="#FF8200" />
           <div>
-            <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: '#8C8C8C', textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: 'var(--color-slate-gray)', textTransform: 'uppercase' }}>
               MONITORED CIRCUITS
             </div>
-            <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1rem', fontWeight: 600, color: '#101820' }}>
+            <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1rem', fontWeight: 600, color: 'var(--color-ink-black)' }}>
               {activeDeviceCount} Nodes Active
             </div>
           </div>
@@ -416,9 +416,9 @@ export const CampusPulseGraph: React.FC<CampusPulseGraphProps> = ({ onNavigate }
           justifyContent: 'space-between',
           fontSize: '0.75rem',
           fontFamily: "var(--font-mono, monospace)",
-          color: '#5B6871',
+          color: 'var(--color-slate-gray)',
           paddingTop: '12px',
-          borderTop: '1px solid rgba(16, 24, 32, 0.06)',
+          borderTop: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.06))',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -434,7 +434,7 @@ export const CampusPulseGraph: React.FC<CampusPulseGraphProps> = ({ onNavigate }
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
-            color: '#101820',
+            color: 'var(--color-ink-black)',
             fontWeight: 600,
             cursor: 'pointer',
             padding: 0,

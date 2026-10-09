@@ -54,12 +54,32 @@ interface ConfirmDialogState {
   onConfirm: () => void;
 }
 
+export type AuthBootstrapState =
+  | 'AUTHENTICATION_UNKNOWN'
+  | 'AUTHENTICATION_VERIFYING'
+  | 'AUTHENTICATED'
+  | 'UNAUTHENTICATED';
+
 interface StateContextType {
   // Realtime Gateway & Infrastructure Health
   connectionState: RealtimeConnectionState;
   realtimeMode: RealtimeMode;
   systemHealth: Record<SubsystemName, ComponentHealth>;
   authSession: AuthUser;
+  isAuthenticated: boolean;
+  authBootstrapState: AuthBootstrapState;
+  gatewayUnavailable: boolean;
+  login: (username: string, password?: string) => Promise<{
+    success: boolean;
+    user?: AuthUser;
+    error?: string;
+    lockedOut?: boolean;
+    retryAfterSeconds?: number;
+    lockedUntil?: string;
+    attempts?: number;
+  }>;
+  logout: () => Promise<void>;
+  syncSession: (user: AuthUser) => void;
 
   // Navigation & Role
   userRole: UserRole;
@@ -93,6 +113,7 @@ interface StateContextType {
   devices: IoTDevice[];
   alerts: CampusAlert[];
   incidents: CampusIncident[];
+  setIncidents: React.Dispatch<React.SetStateAction<CampusIncident[]>>;
   events: CampusEvent[];
   automations: ZoneAutomation[];
   doors: SmartDoor[];
@@ -181,18 +202,63 @@ interface StateContextType {
 const StateContext = createContext<StateContextType | undefined>(undefined);
 
 export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => authService.isAuthenticated());
+
+  const [authBootstrapState, setAuthBootstrapState] = useState<AuthBootstrapState>(() => {
+    if (typeof window !== 'undefined') {
+      const rawPath = window.location.pathname || '/';
+      const pathname = rawPath.toLowerCase().replace(/\/+$/, '') || '/';
+      if (pathname === '/' || pathname === '') return 'UNAUTHENTICATED';
+      if (pathname === '/login') return 'UNAUTHENTICATED';
+      if (pathname === '/app' || pathname.startsWith('/app')) {
+        return 'AUTHENTICATION_VERIFYING';
+      }
+    }
+    return 'AUTHENTICATION_UNKNOWN';
+  });
+
+  const [gatewayUnavailable, setGatewayUnavailable] = useState<boolean>(false);
+
   const [activeTab, setActiveTabState] = useState<NavigationTab>(() => {
     if (typeof window !== 'undefined') {
-      const urlTab = new URLSearchParams(window.location.search).get('tab') as NavigationTab;
-      if (urlTab) return urlTab;
-      const pathname = window.location.pathname;
+      const searchParams = new URLSearchParams(window.location.search);
+      // Explicit logout or reauth query parameters
+      if (searchParams.get('logout') === 'true' || searchParams.get('logout') === '1') {
+        authService.logout();
+        window.history.replaceState(null, '', '/login');
+        return 'login';
+      }
+
+      const urlTab = searchParams.get('tab') as NavigationTab;
+      if (urlTab && urlTab !== 'landing') return urlTab;
+
+      const rawPath = window.location.pathname || '/';
+      const pathname = rawPath.toLowerCase().replace(/\/+$/, '') || '/';
+
+      if (pathname === '/login') {
+        if (authService.isAuthenticated()) {
+          if (searchParams.get('reauth') === 'true' || searchParams.get('switch') === 'true') {
+            return 'login';
+          }
+          window.history.replaceState(null, '', '/app');
+          return 'overview';
+        }
+        return 'login';
+      }
+
       if (pathname === '/' || pathname === '') return 'landing';
-      if (pathname.startsWith('/app/cameras')) return 'monitoring';
-      if (pathname.startsWith('/app/access')) return 'security';
-      if (pathname.startsWith('/app/sensors')) return 'safety';
-      if (pathname.startsWith('/app/incidents') || pathname.startsWith('/app/audit')) return 'incidents';
-      if (pathname.startsWith('/app/energy')) return 'energy';
-      if (pathname === '/app' || pathname.startsWith('/app/')) {
+
+      // Unauthenticated access to /app redirects to /login
+      if (pathname === '/app' || pathname.startsWith('/app')) {
+        if (!authService.isAuthenticated()) {
+          window.history.replaceState(null, '', '/login');
+          return 'login';
+        }
+        if (pathname.startsWith('/app/cameras')) return 'monitoring';
+        if (pathname.startsWith('/app/access')) return 'security';
+        if (pathname.startsWith('/app/sensors')) return 'safety';
+        if (pathname.startsWith('/app/incidents') || pathname.startsWith('/app/audit')) return 'incidents';
+        if (pathname.startsWith('/app/energy')) return 'energy';
         const sub = pathname.replace(/^\/app\/?/, '').split('/')[0] as NavigationTab;
         return sub || 'overview';
       }
@@ -201,17 +267,26 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   });
 
   const setActiveTab = (tab: NavigationTab) => {
-    setActiveTabState(tab);
+    let targetTab = tab;
+    // Auth route guards
+    if (tab !== 'landing' && tab !== 'login' && !authService.isAuthenticated()) {
+      targetTab = 'login';
+    } else if (tab === 'login' && authService.isAuthenticated()) {
+      targetTab = 'overview';
+    }
+
+    setActiveTabState(targetTab);
     if (typeof window !== 'undefined') {
       let targetPath = '/app';
-      if (tab === 'landing') targetPath = '/';
-      else if (tab === 'overview') targetPath = '/app';
-      else if (tab === 'monitoring') targetPath = '/app/cameras';
-      else if (tab === 'security') targetPath = '/app/access';
-      else if (tab === 'safety') targetPath = '/app/sensors';
-      else if (tab === 'incidents') targetPath = '/app/incidents';
-      else if (tab === 'energy') targetPath = '/app/energy';
-      else targetPath = `/app?tab=${tab}`;
+      if (targetTab === 'landing') targetPath = '/';
+      else if (targetTab === 'login') targetPath = '/login';
+      else if (targetTab === 'overview') targetPath = '/app';
+      else if (targetTab === 'monitoring') targetPath = '/app/cameras';
+      else if (targetTab === 'security') targetPath = '/app/access';
+      else if (targetTab === 'safety') targetPath = '/app/sensors';
+      else if (targetTab === 'incidents') targetPath = '/app/incidents';
+      else if (targetTab === 'energy') targetPath = '/app/energy';
+      else targetPath = `/app?tab=${targetTab}`;
 
       if (window.location.pathname !== targetPath) {
         window.history.pushState(null, '', targetPath);
@@ -222,23 +297,104 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handlePopState = () => {
-      const urlTab = new URLSearchParams(window.location.search).get('tab') as NavigationTab;
-      if (urlTab) {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get('logout') === 'true' || searchParams.get('logout') === '1') {
+        authService.logout();
+        setIsAuthenticated(false);
+        setActiveTabState('login');
+        return;
+      }
+
+      const urlTab = searchParams.get('tab') as NavigationTab;
+      if (urlTab && urlTab !== 'landing') {
         setActiveTabState(urlTab);
       } else {
-        const pathname = window.location.pathname;
-        if (pathname === '/' || pathname === '') setActiveTabState('landing');
-        else if (pathname.startsWith('/app/cameras')) setActiveTabState('monitoring');
-        else if (pathname.startsWith('/app/access')) setActiveTabState('security');
-        else if (pathname.startsWith('/app/sensors')) setActiveTabState('safety');
-        else if (pathname.startsWith('/app/incidents') || pathname.startsWith('/app/audit')) setActiveTabState('incidents');
-        else if (pathname.startsWith('/app/energy')) setActiveTabState('energy');
-        else if (pathname.startsWith('/app')) setActiveTabState('overview');
-        else setActiveTabState('landing');
+        const rawPath = window.location.pathname || '/';
+        const pathname = rawPath.toLowerCase().replace(/\/+$/, '') || '/';
+
+        if (pathname === '/login') {
+          if (authService.isAuthenticated()) {
+            if (searchParams.get('reauth') === 'true' || searchParams.get('switch') === 'true') {
+              setActiveTabState('login');
+              return;
+            }
+            window.history.replaceState(null, '', '/app');
+            setActiveTabState('overview');
+          } else {
+            setActiveTabState('login');
+          }
+        } else if (pathname === '/' || pathname === '') {
+          setActiveTabState('landing');
+        } else if (pathname === '/app' || pathname.startsWith('/app')) {
+          if (!authService.isAuthenticated()) {
+            window.history.replaceState(null, '', '/login');
+            setActiveTabState('login');
+          } else {
+            if (pathname.startsWith('/app/cameras')) setActiveTabState('monitoring');
+            else if (pathname.startsWith('/app/access')) setActiveTabState('security');
+            else if (pathname.startsWith('/app/sensors')) setActiveTabState('safety');
+            else if (pathname.startsWith('/app/incidents') || pathname.startsWith('/app/audit')) setActiveTabState('incidents');
+            else if (pathname.startsWith('/app/energy')) setActiveTabState('energy');
+            else setActiveTabState('overview');
+          }
+        } else {
+          setActiveTabState('landing');
+        }
       }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Authoritative Server Session Verification on Mount (Phase 3 & Phase 4)
+  useEffect(() => {
+    let isMounted = true;
+    const verifyAuthoritativeSession = async () => {
+      const rawPath = typeof window !== 'undefined' ? window.location.pathname || '/' : '/';
+      const pathname = rawPath.toLowerCase().replace(/\/+$/, '') || '/';
+      const isAppRoute = pathname === '/app' || pathname.startsWith('/app');
+
+      if (!authService.getSessionToken()) {
+        if (!isMounted) return;
+        setIsAuthenticated(false);
+        setAuthBootstrapState('UNAUTHENTICATED');
+        if (isAppRoute) {
+          if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', '/login');
+          }
+          setActiveTabState('login');
+        }
+        return;
+      }
+
+      setAuthBootstrapState('AUTHENTICATION_VERIFYING');
+      const result = await authService.validateServerSession();
+      if (!isMounted) return;
+
+      if (result.authenticated && result.user) {
+        setIsAuthenticated(true);
+        setAuthBootstrapState('AUTHENTICATED');
+        setUserRoleState(result.user.role);
+        setAuthSession(result.user);
+        setGatewayUnavailable(false);
+      } else {
+        setIsAuthenticated(false);
+        setAuthBootstrapState('UNAUTHENTICATED');
+        if (result.gatewayUnavailable) {
+          setGatewayUnavailable(true);
+        }
+        if (isAppRoute) {
+          if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', '/login');
+          }
+          setActiveTabState('login');
+        }
+      }
+    };
+    verifyAuthoritativeSession();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -733,6 +889,45 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const session = authService.setUserRole(role);
     setAuthSession(session);
     addAuditRecord('ROLE_CLEARANCE_CHANGED', 'Console Session', 'SUCCESS', `Clearance updated to ${role.toUpperCase()} (${session.clearanceLevel})`);
+  };
+
+  const loginAction = async (username: string, password?: string) => {
+    const res = await authService.login(username, password);
+    if (res.success && res.user) {
+      setIsAuthenticated(true);
+      setAuthBootstrapState('AUTHENTICATED');
+      setGatewayUnavailable(false);
+      setUserRoleState(res.user.role);
+      setAuthSession(res.user);
+      addAuditRecord('USER_LOGIN', 'Operator Console', 'SUCCESS', `Authenticated operator ${res.user.name} (${res.user.role.toUpperCase()})`);
+    }
+    return res;
+  };
+
+  const syncSessionAction = (user: AuthUser) => {
+    setIsAuthenticated(true);
+    setAuthBootstrapState('AUTHENTICATED');
+    setGatewayUnavailable(false);
+    setUserRoleState(user.role);
+    setAuthSession(user);
+    addAuditRecord('USER_LOGIN', 'Operator Console', 'SUCCESS', `Authenticated operator ${user.name} (${user.role.toUpperCase()})`);
+  };
+
+  const logoutAction = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      realtimeGateway.disconnect();
+      setIsAuthenticated(false);
+      setAuthBootstrapState('UNAUTHENTICATED');
+      setGatewayUnavailable(false);
+      setUserRoleState('student');
+      setAuthSession(authService.getCurrentUser());
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', '/login');
+      }
+      setActiveTabState('login');
+    }
   };
 
   // Audio Alarm State
@@ -1964,6 +2159,12 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         realtimeMode,
         systemHealth,
         authSession,
+        isAuthenticated,
+        authBootstrapState,
+        gatewayUnavailable,
+        login: loginAction,
+        logout: logoutAction,
+        syncSession: syncSessionAction,
         userRole,
         setUserRole,
         activeTab,
@@ -1982,6 +2183,7 @@ export const StateProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         devices,
         alerts,
         incidents,
+        setIncidents,
         events,
         automations,
         doors,

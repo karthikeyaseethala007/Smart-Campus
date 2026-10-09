@@ -73,7 +73,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Terminal size={13} color="#5B6871" />
+          <Terminal size={13} color="var(--color-slate-gray)" />
           <span
             style={{
               fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
@@ -81,7 +81,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
               fontWeight: 700,
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
-              color: '#5B6871',
+              color: 'var(--color-slate-gray)',
             }}
           >
             COMMAND DISPATCH · QUICK ACTIONS
@@ -109,7 +109,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 14px',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface-canvas, #FFFFFF)',
             border: '1px solid rgba(16, 24, 32, 0.1)',
             borderRadius: '10px',
             cursor: 'pointer',
@@ -119,7 +119,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.borderColor = '#101820';
+            e.currentTarget.style.borderColor = 'var(--color-ink-black)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
@@ -127,15 +127,15 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Video size={14} color="#101820" />
+            <Video size={14} color="var(--color-ink-black)" />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', fontWeight: 700, color: '#101820' }}>
+              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-ink-black)' }}>
                 OPEN CAMERA
               </span>
               <span style={{ fontSize: '0.625rem', color: '#8C8C8C' }}>7-Stream Matrix</span>
             </div>
           </div>
-          <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', color: '#5B6871' }}>↵</span>
+          <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', color: 'var(--color-slate-gray)' }}>↵</span>
         </button>
 
         {/* 2. ACKNOWLEDGE INCIDENT */}
@@ -166,10 +166,10 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShieldAlert size={14} color="#FF8200" />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', fontWeight: 700, color: '#101820' }}>
+              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-ink-black)' }}>
                 ACK INCIDENTS
               </span>
-              <span style={{ fontSize: '0.625rem', color: '#8C8C8C' }}>Triage Open Queue</span>
+              <span style={{ fontSize: '0.625rem', color: 'var(--color-slate-gray)' }}>Triage Open Queue</span>
             </div>
           </div>
           <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', color: '#FF8200' }}>↵</span>
@@ -245,7 +245,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.borderColor = '#101820';
+            e.currentTarget.style.borderColor = 'var(--color-ink-black)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
@@ -253,15 +253,15 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Lock size={14} color="#101820" />
+            <Lock size={14} color="var(--color-ink-black)" />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', fontWeight: 700, color: '#101820' }}>
+              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-ink-black)' }}>
                 ACCESS OVERRIDE
               </span>
               <span style={{ fontSize: '0.625rem', color: '#8C8C8C' }}>Emergency Release</span>
             </div>
           </div>
-          <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', color: '#5B6871' }}>↵</span>
+          <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', color: 'var(--color-slate-gray)' }}>↵</span>
         </button>
 
         {/* 5. RUN SENSOR TEST */}
@@ -272,7 +272,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 14px',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface-canvas, #FFFFFF)',
             border: '1px solid rgba(16, 24, 32, 0.1)',
             borderRadius: '10px',
             cursor: 'pointer',
@@ -282,7 +282,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.borderColor = '#101820';
+            e.currentTarget.style.borderColor = 'var(--color-ink-black)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
@@ -290,15 +290,15 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Activity size={14} color="#101820" />
+            <Activity size={14} color="var(--color-ink-black)" />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', fontWeight: 700, color: '#101820' }}>
+              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-ink-black)' }}>
                 RUN SENSOR TEST
               </span>
               <span style={{ fontSize: '0.625rem', color: '#8C8C8C' }}>Modbus Health Loop</span>
             </div>
           </div>
-          <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', color: '#5B6871' }}>↵</span>
+          <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', color: 'var(--color-slate-gray)' }}>↵</span>
         </button>
 
         {/* 6. VIEW AUDIT */}
@@ -309,7 +309,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 14px',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface-canvas, #FFFFFF)',
             border: '1px solid rgba(16, 24, 32, 0.1)',
             borderRadius: '10px',
             cursor: 'pointer',
@@ -319,7 +319,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.borderColor = '#101820';
+            e.currentTarget.style.borderColor = 'var(--color-ink-black)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
@@ -327,15 +327,15 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FileText size={14} color="#101820" />
+            <FileText size={14} color="var(--color-ink-black)" />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', fontWeight: 700, color: '#101820' }}>
+              <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-ink-black)' }}>
                 VIEW AUDIT
               </span>
               <span style={{ fontSize: '0.625rem', color: '#8C8C8C' }}>Compliance Trail</span>
             </div>
           </div>
-          <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', color: '#5B6871' }}>↵</span>
+          <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', color: 'var(--color-slate-gray)' }}>↵</span>
         </button>
       </div>
 
@@ -395,7 +395,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
                     fontFamily: "var(--font-display, sans-serif)",
                     fontSize: '1.25rem',
                     fontWeight: 700,
-                    color: '#101820',
+                    color: 'var(--color-ink-black)',
                     margin: 0,
                   }}
                 >
@@ -407,7 +407,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
               </div>
             </div>
 
-            <p style={{ fontSize: '0.875rem', color: '#5B6871', lineHeight: 1.5, margin: 0 }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-slate-gray)', lineHeight: 1.5, margin: 0 }}>
               This will restrict portal passage, engage magnetic solenoids, seal automated dampers, and log an elevated security protocol for the selected zone.
             </p>
 
@@ -420,9 +420,9 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
                   fontSize: '0.813rem',
                   fontFamily: "var(--font-mono, monospace)",
                   fontWeight: 600,
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: 'var(--surface-canvas, #FFFFFF)',
                   border: '1px solid rgba(16, 24, 32, 0.15)',
-                  color: '#5B6871',
+                  color: 'var(--color-slate-gray)',
                   cursor: 'pointer',
                 }}
               >
@@ -475,7 +475,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
             style={{
               maxWidth: '460px',
               width: '100%',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface-card-mist, #FFFFFF)',
               borderRadius: '16px',
               padding: '28px',
               border: '1px solid rgba(16, 24, 32, 0.15)',
@@ -506,7 +506,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
                     fontFamily: "var(--font-display, sans-serif)",
                     fontSize: '1.25rem',
                     fontWeight: 700,
-                    color: '#101820',
+                    color: 'var(--color-ink-black)',
                     margin: 0,
                   }}
                 >
@@ -518,7 +518,7 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
               </div>
             </div>
 
-            <p style={{ fontSize: '0.875rem', color: '#5B6871', lineHeight: 1.5, margin: 0 }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-slate-gray)', lineHeight: 1.5, margin: 0 }}>
               This will energize the portal unlock solenoid for 8 seconds and log a privileged security operator bypass to the compliance audit ledger.
             </p>
 
@@ -531,9 +531,9 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
                   fontSize: '0.813rem',
                   fontFamily: "var(--font-mono, monospace)",
                   fontWeight: 600,
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: 'var(--surface-canvas, #FFFFFF)',
                   border: '1px solid rgba(16, 24, 32, 0.15)',
-                  color: '#5B6871',
+                  color: 'var(--color-slate-gray)',
                   cursor: 'pointer',
                 }}
               >
@@ -547,9 +547,9 @@ export const QuickCommandBar: React.FC<QuickCommandBarProps> = ({ onTriggerEmerg
                   fontSize: '0.813rem',
                   fontFamily: "var(--font-mono, monospace)",
                   fontWeight: 700,
-                  backgroundColor: '#101820',
+                  backgroundColor: 'var(--color-ink-black)',
                   border: 'none',
-                  color: '#FFFFFF',
+                  color: 'var(--color-paper-white)',
                   cursor: 'pointer',
                 }}
               >

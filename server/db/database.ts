@@ -25,6 +25,13 @@ export interface DbUser {
   department: string;
   isActive: boolean;
   createdAt: string;
+  googleSubject?: string;
+  googleEmail?: string;
+  googleEmailVerified?: boolean;
+  googleLinkedAt?: string;
+  failedLoginAttempts?: number;
+  lockedUntil?: string | null;
+  recoveryCodeHashes?: string[];
 }
 
 export interface DbSession {
@@ -76,12 +83,17 @@ export interface DatabaseRepository {
   // Users
   getUserByUsername(username: string): Promise<DbUser | null>;
   getUserById(id: string): Promise<DbUser | null>;
+  getUserByGoogleSubject(subject: string): Promise<DbUser | null>;
+  getUserByEmail(email: string): Promise<DbUser | null>;
+  linkGoogleIdentity(userId: string, googleSubject: string, googleEmail?: string): Promise<void>;
   createUser(user: DbUser): Promise<void>;
+  updateUser(user: DbUser): Promise<void>;
 
   // Sessions
   createSession(session: DbSession): Promise<void>;
   getSession(id: string): Promise<DbSession | null>;
   revokeSession(id: string): Promise<boolean>;
+  revokeAllUserSessions(userId: string): Promise<void>;
 
   // Zones
   getAllZones(): Promise<ZoneAutomation[]>;
@@ -94,8 +106,8 @@ export interface DatabaseRepository {
   upsertDevice(device: IoTDevice): Promise<void>;
 
   // Cameras
-  getAllCameras(): Promise<(CameraFeed & { internalRtspUrl?: string })[]>;
-  getCamera(id: string): Promise<(CameraFeed & { internalRtspUrl?: string }) | null>;
+  getAllCameras(): Promise<CameraFeed[]>;
+  getCamera(id: string): Promise<CameraFeed | null>;
   updateCameraStatus(id: string, status: CameraFeed['status']): Promise<void>;
 
   // Sensors
@@ -130,7 +142,7 @@ export interface DatabaseRepository {
   sessions: Map<string, DbSession>;
   zones: Map<string, ZoneAutomation>;
   devices: Map<string, IoTDevice>;
-  cameras: Map<string, CameraFeed & { internalRtspUrl?: string }>;
+  cameras: Map<string, CameraFeed>;
   sensors: Map<string, DbSensor>;
   accessControllers: Map<string, SmartDoor>;
   incidents: Map<string, CampusIncident>;
@@ -148,7 +160,7 @@ export class InMemoryRepository implements DatabaseRepository {
   public sessions: Map<string, DbSession> = new Map();
   public zones: Map<string, ZoneAutomation> = new Map();
   public devices: Map<string, IoTDevice> = new Map();
-  public cameras: Map<string, CameraFeed & { internalRtspUrl?: string }> = new Map();
+  public cameras: Map<string, CameraFeed> = new Map();
   public sensors: Map<string, DbSensor> = new Map();
   public accessControllers: Map<string, SmartDoor> = new Map();
   public authorizedBadges: Map<string, AuthorizedBadge> = new Map();
@@ -199,6 +211,14 @@ export class InMemoryRepository implements DatabaseRepository {
         department: 'Campus Central Command',
         isActive: true,
         createdAt: new Date().toISOString(),
+        googleSubject: 'google-sub-admin-001',
+        googleEmail: 'admin@campus.defense.internal',
+        googleEmailVerified: true,
+        googleLinkedAt: new Date().toISOString(),
+        failedLoginAttempts: 0,
+        recoveryCodeHashes: [
+          '00112233445566778899aabbccddeeff:fa03fe1bfdc27d786831b88068f991202cc8ef2f4075e19b576bc0dd834e48154a751ed48d1108fe801af26c2a8764fbc4fa746f4e52cc29f249cfe3de16dc25'
+        ],
       },
       {
         id: 'USR-SEC-412',
@@ -211,6 +231,11 @@ export class InMemoryRepository implements DatabaseRepository {
         department: 'Campus Security Patrol',
         isActive: true,
         createdAt: new Date().toISOString(),
+        googleSubject: 'google-sub-security-412',
+        googleEmail: 'security.vance@campus.defense.internal',
+        googleEmailVerified: true,
+        googleLinkedAt: new Date().toISOString(),
+        failedLoginAttempts: 0,
       },
       {
         id: 'USR-FAC-889',
@@ -223,6 +248,14 @@ export class InMemoryRepository implements DatabaseRepository {
         department: 'Science & Physics Faculty',
         isActive: true,
         createdAt: new Date().toISOString(),
+        googleSubject: 'google-sub-faculty-889',
+        googleEmail: 'rigby.eleanor@campus.internal',
+        googleEmailVerified: true,
+        googleLinkedAt: new Date().toISOString(),
+        failedLoginAttempts: 0,
+        recoveryCodeHashes: [
+          '00112233445566778899aabbccddeeff:46cb4984975a8195a7a2a0eb9bc6ead9fed12cd48faf842bd0404a6081e15013739994450807bc8da384017861c0acba6af7711cd6baf1f0a64d61f6a1c9e7c9'
+        ],
       },
       {
         id: 'USR-STU-992',
@@ -235,6 +268,11 @@ export class InMemoryRepository implements DatabaseRepository {
         department: 'Undergraduate Engineering',
         isActive: true,
         createdAt: new Date().toISOString(),
+        googleSubject: 'google-sub-student-992',
+        googleEmail: 'chen.a@student.campus.internal',
+        googleEmailVerified: true,
+        googleLinkedAt: new Date().toISOString(),
+        failedLoginAttempts: 0,
       },
     ];
     defaultUsers.forEach(u => this.users.set(u.id, u));
@@ -425,7 +463,7 @@ export class InMemoryRepository implements DatabaseRepository {
     ];
     defaultBadges.forEach(b => this.authorizedBadges.set(`${b.facilityCode}:${b.cardNumber}`, b));
 
-    const defaultCameras: (CameraFeed & { internalRtspUrl?: string })[] = [
+    const defaultCameras: CameraFeed[] = [
       {
         id: 'CAM-01',
         name: 'Gate Access PTZ · Primary',
@@ -437,7 +475,6 @@ export class InMemoryRepository implements DatabaseRepository {
         zone: 'Main Gate',
         lastMaintenance: '2026-09-15',
         streamUrl: '/streams/cam-01/index.m3u8',
-        internalRtspUrl: 'rtsp://backend-internal-auth@10.0.1.50:554/live/ch0',
       },
       {
         id: 'CAM-02',
@@ -542,7 +579,41 @@ export class InMemoryRepository implements DatabaseRepository {
     return this.users.get(id) || null;
   }
 
+  public async getUserByGoogleSubject(subject: string): Promise<DbUser | null> {
+    if (!subject) return null;
+    for (const user of this.users.values()) {
+      if (user.googleSubject === subject && user.isActive) {
+        return user;
+      }
+    }
+    return null;
+  }
+
+  public async getUserByEmail(email: string): Promise<DbUser | null> {
+    if (!email) return null;
+    const cleanEmail = email.toLowerCase().trim();
+    for (const user of this.users.values()) {
+      if (user.googleEmail && user.googleEmail.toLowerCase().trim() === cleanEmail && user.isActive) {
+        return user;
+      }
+    }
+    return null;
+  }
+
+  public async linkGoogleIdentity(userId: string, googleSubject: string, googleEmail?: string): Promise<void> {
+    const user = this.users.get(userId);
+    if (user) {
+      user.googleSubject = googleSubject;
+      if (googleEmail) user.googleEmail = googleEmail;
+      this.users.set(userId, user);
+    }
+  }
+
   public async createUser(user: DbUser): Promise<void> {
+    this.users.set(user.id, user);
+  }
+
+  public async updateUser(user: DbUser): Promise<void> {
     this.users.set(user.id, user);
   }
 
@@ -560,6 +631,15 @@ export class InMemoryRepository implements DatabaseRepository {
     session.revokedAt = new Date().toISOString();
     this.sessions.set(id, session);
     return true;
+  }
+
+  public async revokeAllUserSessions(userId: string): Promise<void> {
+    const now = new Date().toISOString();
+    for (const session of this.sessions.values()) {
+      if (session.userId === userId && !session.revokedAt) {
+        session.revokedAt = now;
+      }
+    }
   }
 
   public async getAllZones(): Promise<ZoneAutomation[]> {
@@ -586,11 +666,11 @@ export class InMemoryRepository implements DatabaseRepository {
     this.devices.set(device.id, device);
   }
 
-  public async getAllCameras(): Promise<(CameraFeed & { internalRtspUrl?: string })[]> {
+  public async getAllCameras(): Promise<CameraFeed[]> {
     return Array.from(this.cameras.values());
   }
 
-  public async getCamera(id: string): Promise<(CameraFeed & { internalRtspUrl?: string }) | null> {
+  public async getCamera(id: string): Promise<CameraFeed | null> {
     return this.cameras.get(id) || null;
   }
 
@@ -692,7 +772,7 @@ export class PostgresRepository implements DatabaseRepository {
   public sessions: Map<string, DbSession>;
   public zones: Map<string, ZoneAutomation>;
   public devices: Map<string, IoTDevice>;
-  public cameras: Map<string, CameraFeed & { internalRtspUrl?: string }>;
+  public cameras: Map<string, CameraFeed>;
   public sensors: Map<string, DbSensor>;
   public accessControllers: Map<string, SmartDoor>;
   public incidents: Map<string, CampusIncident>;
@@ -852,7 +932,8 @@ export class PostgresRepository implements DatabaseRepository {
 
     const res = await this.pool.query(
       `SELECT id, username, password_hash as "passwordHash", name, badge_number as "badgeNumber",
-              role, clearance_level as "clearanceLevel", department, is_active as "isActive", created_at as "createdAt"
+              role, clearance_level as "clearanceLevel", department, is_active as "isActive", created_at as "createdAt",
+              google_subject as "googleSubject", google_email as "googleEmail"
        FROM users WHERE LOWER(username) = LOWER($1) AND is_active = TRUE`,
       [username]
     );
@@ -864,11 +945,48 @@ export class PostgresRepository implements DatabaseRepository {
 
     const res = await this.pool.query(
       `SELECT id, username, password_hash as "passwordHash", name, badge_number as "badgeNumber",
-              role, clearance_level as "clearanceLevel", department, is_active as "isActive", created_at as "createdAt"
+              role, clearance_level as "clearanceLevel", department, is_active as "isActive", created_at as "createdAt",
+              google_subject as "googleSubject", google_email as "googleEmail"
        FROM users WHERE id = $1`,
       [id]
     );
     return res.rows[0] || null;
+  }
+
+  public async getUserByGoogleSubject(subject: string): Promise<DbUser | null> {
+    if (!this.isConnected) return this.inMemoryFallback.getUserByGoogleSubject(subject);
+
+    const res = await this.pool.query(
+      `SELECT id, username, password_hash as "passwordHash", name, badge_number as "badgeNumber",
+              role, clearance_level as "clearanceLevel", department, is_active as "isActive", created_at as "createdAt",
+              google_subject as "googleSubject", google_email as "googleEmail"
+       FROM users WHERE google_subject = $1 AND is_active = TRUE`,
+      [subject]
+    );
+    return res.rows[0] || null;
+  }
+
+  public async getUserByEmail(email: string): Promise<DbUser | null> {
+    if (!this.isConnected) return this.inMemoryFallback.getUserByEmail(email);
+
+    const res = await this.pool.query(
+      `SELECT id, username, password_hash as "passwordHash", name, badge_number as "badgeNumber",
+              role, clearance_level as "clearanceLevel", department, is_active as "isActive", created_at as "createdAt",
+              google_subject as "googleSubject", google_email as "googleEmail"
+       FROM users WHERE LOWER(google_email) = LOWER($1) AND is_active = TRUE`,
+      [email]
+    );
+    return res.rows[0] || null;
+  }
+
+  public async linkGoogleIdentity(userId: string, googleSubject: string, googleEmail?: string): Promise<void> {
+    this.inMemoryFallback.linkGoogleIdentity(userId, googleSubject, googleEmail);
+    if (!this.isConnected) return;
+
+    await this.pool.query(
+      `UPDATE users SET google_subject = $1, google_email = COALESCE($2, google_email) WHERE id = $3`,
+      [googleSubject, googleEmail || null, userId]
+    );
   }
 
   public async createUser(user: DbUser): Promise<void> {
@@ -883,6 +1001,37 @@ export class PostgresRepository implements DatabaseRepository {
          role = EXCLUDED.role,
          updated_at = CURRENT_TIMESTAMP`,
       [user.id, user.username, user.passwordHash, user.name, user.badgeNumber, user.role, user.clearanceLevel, user.department, user.isActive, user.createdAt]
+    );
+  }
+
+  public async updateUser(user: DbUser): Promise<void> {
+    this.inMemoryFallback.updateUser(user);
+    if (!this.isConnected) return;
+
+    await this.pool.query(
+      `UPDATE users SET
+         password_hash = $1,
+         name = $2,
+         badge_number = $3,
+         role = $4,
+         clearance_level = $5,
+         department = $6,
+         is_active = $7,
+         google_subject = $8,
+         google_email = $9
+       WHERE id = $10`,
+      [
+        user.passwordHash,
+        user.name,
+        user.badgeNumber,
+        user.role,
+        user.clearanceLevel,
+        user.department,
+        user.isActive,
+        user.googleSubject || null,
+        user.googleEmail || null,
+        user.id,
+      ]
     );
   }
 
@@ -920,6 +1069,16 @@ export class PostgresRepository implements DatabaseRepository {
       [id]
     );
     return (res.rowCount || 0) > 0;
+  }
+
+  public async revokeAllUserSessions(userId: string): Promise<void> {
+    this.inMemoryFallback.revokeAllUserSessions(userId);
+    if (!this.isConnected) return;
+
+    await this.pool.query(
+      `UPDATE sessions SET revoked_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND revoked_at IS NULL`,
+      [userId]
+    );
   }
 
   public async getAllZones(): Promise<ZoneAutomation[]> {
@@ -1008,11 +1167,11 @@ export class PostgresRepository implements DatabaseRepository {
     );
   }
 
-  public async getAllCameras(): Promise<(CameraFeed & { internalRtspUrl?: string })[]> {
+  public async getAllCameras(): Promise<CameraFeed[]> {
     return this.inMemoryFallback.getAllCameras();
   }
 
-  public async getCamera(id: string): Promise<(CameraFeed & { internalRtspUrl?: string }) | null> {
+  public async getCamera(id: string): Promise<CameraFeed | null> {
     return this.inMemoryFallback.getCamera(id);
   }
 

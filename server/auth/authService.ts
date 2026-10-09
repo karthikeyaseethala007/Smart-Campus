@@ -3,6 +3,7 @@ import type { IncomingMessage } from 'node:http';
 import { db, type DbUser, type DbSession } from '../db/database';
 import { Logger } from '../utils/logger';
 import { config } from '../config';
+import { serverEventBus } from '../events/serverEventBus';
 import type { UserRole } from '../../src/types';
 import type { CampusPermission } from '../../src/services/authService';
 
@@ -53,6 +54,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<CampusPermission>> = {
 interface LoginFailureTracker {
   count: number;
   lockedUntil?: number;
+  lastAttemptAt: number;
+  sourceIp: string;
 }
 const loginFailures: Map<string, LoginFailureTracker> = new Map();
 
@@ -108,45 +111,110 @@ export class ServerAuthService {
     username: string,
     password?: string,
     ip = '127.0.0.1'
-  ): Promise<{ success: boolean; session?: AuthSessionPayload; error?: string; lockedOut?: boolean }> {
-    const rateKey = `${username.toLowerCase()}_${ip}`;
+  ): Promise<{
+    success: boolean;
+    session?: AuthSessionPayload;
+    error?: string;
+    lockedOut?: boolean;
+    retryAfterSeconds?: number;
+    lockedUntil?: string;
+    attempts?: number;
+  }> {
+    const userKey = username.toLowerCase().trim();
     const now = Date.now();
-    const tracker = loginFailures.get(rateKey);
+    const tracker = loginFailures.get(userKey);
 
     if (tracker && tracker.lockedUntil && tracker.lockedUntil > now) {
       const waitSec = Math.ceil((tracker.lockedUntil - now) / 1000);
-      Logger.warn('AUTH', `Brute-force lockout active for ${username}`, {
+      Logger.warn('AUTH', `Security lockout active for ${username}`, {
         userId: username,
-        errorClassification: 'BRUTE_FORCE_LOCKOUT',
+        errorClassification: 'SECURITY_LOCKOUT_ACTIVE',
+      });
+      // Audit record for blocked attempt during active lockout (Phase 8)
+      await db.addAuditRecord({
+        id: `AUD-BLK-${Date.now().toString().slice(-4)}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        actor: username,
+        role: (await db.getUserByUsername(username))?.role || 'student',
+        action: 'AUTH_LOCKOUT_BLOCKED_ATTEMPT',
+        target: 'Login Endpoint',
+        result: 'LOCKED',
+        details: `Login attempt blocked: account is locked out until ${new Date(tracker.lockedUntil).toISOString()}. Source: ${ip}`,
+        zone: 'Security Gateway',
       });
       return {
         success: false,
         lockedOut: true,
-        error: `Account temporarily locked due to excessive failed attempts. Try again in ${waitSec}s.`,
+        retryAfterSeconds: waitSec,
+        lockedUntil: new Date(tracker.lockedUntil).toISOString(),
+        attempts: tracker.count,
+        error: 'SECURITY LOCKOUT ACTIVE: Too many failed authentication attempts. Authentication is temporarily locked. Please wait until the lockout expires or use verified account recovery.',
       };
     }
 
     const user = await db.getUserByUsername(username);
 
     if (!user) {
-      this.recordFailedAttempt(rateKey, username, ip, 'User not found');
-      return { success: false, error: 'Invalid credentials' };
+      const failRes = await this.recordFailedAttempt(userKey, username, ip, 'User not found');
+      if (failRes.lockedOut) {
+        return {
+          success: false,
+          lockedOut: true,
+          retryAfterSeconds: failRes.retryAfterSeconds,
+          lockedUntil: failRes.lockedUntil,
+          attempts: failRes.attempts,
+          error: 'SECURITY LOCKOUT ACTIVE: Too many failed authentication attempts. Authentication is temporarily locked. Please wait until the lockout expires or use verified account recovery.',
+        };
+      }
+      return { success: false, error: 'Invalid credentials', attempts: failRes.attempts };
     }
 
     // Fail-closed password verification: missing or empty password MUST fail
     if (!password || typeof password !== 'string' || password.trim().length === 0) {
-      this.recordFailedAttempt(rateKey, username, ip, 'Missing or empty password');
-      return { success: false, error: 'Invalid credentials' };
+      const failRes = await this.recordFailedAttempt(userKey, username, ip, 'Missing or empty password');
+      if (failRes.lockedOut) {
+        return {
+          success: false,
+          lockedOut: true,
+          retryAfterSeconds: failRes.retryAfterSeconds,
+          lockedUntil: failRes.lockedUntil,
+          attempts: failRes.attempts,
+          error: 'SECURITY LOCKOUT ACTIVE: Too many failed authentication attempts. Authentication is temporarily locked. Please wait until the lockout expires or use verified account recovery.',
+        };
+      }
+      return { success: false, error: 'Invalid credentials', attempts: failRes.attempts };
     }
 
     if (!this.verifyPassword(password, user.passwordHash)) {
-      this.recordFailedAttempt(rateKey, username, ip, 'Invalid password');
-      return { success: false, error: 'Invalid credentials' };
+      const failRes = await this.recordFailedAttempt(userKey, username, ip, 'Invalid password');
+      if (failRes.lockedOut) {
+        return {
+          success: false,
+          lockedOut: true,
+          retryAfterSeconds: failRes.retryAfterSeconds,
+          lockedUntil: failRes.lockedUntil,
+          attempts: failRes.attempts,
+          error: 'SECURITY LOCKOUT ACTIVE: Too many failed authentication attempts. Authentication is temporarily locked. Please wait until the lockout expires or use verified account recovery.',
+        };
+      }
+      return { success: false, error: 'Invalid credentials', attempts: failRes.attempts };
     }
 
     // Reset failed attempts on success
-    loginFailures.delete(rateKey);
+    this.clearLockout(username);
 
+    const sessionPayload = await this.createSessionForUser(user, 'PASSWORD');
+
+    return {
+      success: true,
+      session: sessionPayload,
+    };
+  }
+
+  public async createSessionForUser(
+    user: DbUser,
+    method: 'PASSWORD' | 'GOOGLE' = 'PASSWORD'
+  ): Promise<AuthSessionPayload> {
     const token = 'tok_' + crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + config.sessionLifetimeHours * 60 * 60 * 1000).toISOString();
 
@@ -160,64 +228,222 @@ export class ServerAuthService {
 
     await db.createSession(session);
 
-    // Record login audit
+    // Record login audit (Phase 8: AUTH_SUCCESS)
+    const auditTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     await db.addAuditRecord({
       id: `AUD-AUTH-${Date.now().toString().slice(-4)}`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      timestamp: auditTimeStr,
       actor: user.name,
       role: user.role,
-      action: 'USER_LOGIN',
+      action: 'AUTH_SUCCESS',
       target: 'Command Center API',
       result: 'SUCCESS',
-      details: `Session established (valid for ${config.sessionLifetimeHours}h)`,
+      details: `Session established via ${method} (valid for ${config.sessionLifetimeHours}h)`,
+      zone: 'Operations Console',
+    });
+    await db.addAuditRecord({
+      id: `AUD-LOGIN-${Date.now().toString().slice(-4)}`,
+      timestamp: auditTimeStr,
+      actor: user.name,
+      role: user.role,
+      action: method === 'GOOGLE' ? 'GOOGLE_OAUTH_LOGIN' : 'USER_LOGIN',
+      target: 'Command Center API',
+      result: 'SUCCESS',
+      details: `Session established via ${method} (valid for ${config.sessionLifetimeHours}h)`,
       zone: 'Operations Console',
     });
 
-    Logger.info('AUTH', `User logged in: ${user.username}`, { userId: user.id, zoneId: 'Operations Console' });
+    Logger.info('AUTH', `Session established via ${method}: ${user.username}`, {
+      userId: user.id,
+      zoneId: 'Operations Console',
+    });
 
     const { passwordHash: _, ...safeUser } = user;
     return {
-      success: true,
-      session: {
-        sessionToken: token,
-        user: safeUser,
-        expiresAt,
-      },
+      sessionToken: token,
+      user: safeUser,
+      expiresAt,
     };
   }
 
-  private recordFailedAttempt(rateKey: string, username: string, _ip: string, reason: string): void {
-    const tracker = loginFailures.get(rateKey) || { count: 0 };
+  private async recordFailedAttempt(
+    userKey: string,
+    username: string,
+    ip: string,
+    reason: string
+  ): Promise<{ lockedOut: boolean; retryAfterSeconds?: number; lockedUntil?: string; attempts: number }> {
+    const tracker = loginFailures.get(userKey) || { count: 0, lastAttemptAt: Date.now(), sourceIp: ip };
     tracker.count++;
+    tracker.lastAttemptAt = Date.now();
+    tracker.sourceIp = ip;
 
-    if (tracker.count >= 5) {
-      tracker.lockedUntil = Date.now() + 15 * 60 * 1000; // 15 mins
-      db.addAuditRecord({
-        id: `AUD-LOCK-${Date.now().toString().slice(-4)}`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    const user = await db.getUserByUsername(username);
+    const userRole = user?.role || 'student';
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    if (tracker.count >= config.authMaxFailedAttempts) {
+      tracker.lockedUntil = Date.now() + config.authLockoutMinutes * 60 * 1000;
+      loginFailures.set(userKey, tracker);
+
+      if (user) {
+        user.failedLoginAttempts = tracker.count;
+        user.lockedUntil = new Date(tracker.lockedUntil).toISOString();
+        await db.updateUser(user);
+      }
+
+      const auditId = `AUD-LOCK-${Date.now().toString().slice(-4)}`;
+      // 1. Audit Records (Phase 8: AUTH_LOCKOUT_TRIGGERED and SECURITY_LOCKOUT)
+      await db.addAuditRecord({
+        id: auditId,
+        timestamp: timeStr,
         actor: username,
-        role: 'student',
-        action: 'AUTHENTICATION_LOCKOUT',
+        role: userRole,
+        action: 'AUTH_LOCKOUT_TRIGGERED',
         target: 'Login Endpoint',
         result: 'ESCALATED',
-        details: `Brute-force protection engaged after 5 failed attempts (${reason})`,
+        details: `Account locked after ${tracker.count} consecutive failed attempts (${reason}). Source: ${ip}`,
         zone: 'Security Gateway',
       });
-    } else {
-      db.addAuditRecord({
-        id: `AUD-FAIL-${Date.now().toString().slice(-4)}`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      await db.addAuditRecord({
+        id: `AUD-SECLOCK-${Date.now().toString().slice(-4)}`,
+        timestamp: timeStr,
         actor: username,
-        role: 'student',
+        role: userRole,
+        action: 'SECURITY_LOCKOUT',
+        target: 'Login Endpoint',
+        result: 'ESCALATED',
+        details: `Account locked after ${tracker.count} consecutive failed attempts (${reason}). Source: ${ip}`,
+        zone: 'Security Gateway',
+      });
+
+      // 2. Notification Center Activity Event
+      await db.addActivityEvent({
+        id: `ACT-LOCK-${Date.now().toString().slice(-4)}`,
+        type: 'security',
+        event: `SECURITY LOCKOUT: Account authentication locked for ${username} after ${tracker.count} failed attempts. Source: ${ip}`,
+        time: timeStr,
+        location: 'Security Gateway',
+        severity: 'critical',
+        source: 'live',
+      });
+
+      // 3. Broadcast Realtime Security Lockout Event with complete audit metadata (Phase 8)
+      const eventId = `EVT-LOCK-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      serverEventBus.processEvent({
+        id: eventId,
+        type: 'SECURITY_LOCKOUT',
+        category: 'SYSTEM',
+        source: 'system',
+        timestamp: timeStr,
+        payload: {
+          accountId: username,
+          username,
+          role: userRole,
+          timestamp: timeStr,
+          source: 'Security Gateway',
+          context: 'Authentication Lockout',
+          thresholdReached: tracker.count,
+          lockoutDurationMinutes: config.authLockoutMinutes,
+          ip,
+          severity: 'critical',
+          auditId,
+          count: tracker.count,
+          lockedUntil: new Date(tracker.lockedUntil).toISOString(),
+          details: `Account authentication locked after ${tracker.count} consecutive failed attempts. Source: ${ip}`,
+        },
+      });
+
+      const waitSec = Math.ceil((tracker.lockedUntil - Date.now()) / 1000);
+      return {
+        lockedOut: true,
+        retryAfterSeconds: waitSec,
+        lockedUntil: new Date(tracker.lockedUntil).toISOString(),
+        attempts: tracker.count,
+      };
+    } else {
+      loginFailures.set(userKey, tracker);
+
+      if (user) {
+        user.failedLoginAttempts = tracker.count;
+        await db.updateUser(user);
+      }
+
+      // Phase 8: AUTH_FAILED and LOGIN_FAILURE audit records
+      await db.addAuditRecord({
+        id: `AUD-FAIL-${Date.now().toString().slice(-4)}`,
+        timestamp: timeStr,
+        actor: username,
+        role: userRole,
+        action: 'AUTH_FAILED',
+        target: 'Login Endpoint',
+        result: 'DENIED',
+        details: `${reason} (Attempt ${tracker.count} of ${config.authMaxFailedAttempts}). Source: ${ip}`,
+        zone: 'Security Gateway',
+      });
+      await db.addAuditRecord({
+        id: `AUD-LFAIL-${Date.now().toString().slice(-4)}`,
+        timestamp: timeStr,
+        actor: username,
+        role: userRole,
         action: 'LOGIN_FAILURE',
         target: 'Login Endpoint',
         result: 'DENIED',
-        details: reason,
+        details: `${reason} (Attempt ${tracker.count} of ${config.authMaxFailedAttempts})`,
         zone: 'Security Gateway',
       });
-    }
 
-    loginFailures.set(rateKey, tracker);
+      return {
+        lockedOut: false,
+        attempts: tracker.count,
+      };
+    }
+  }
+
+  public async clearLockout(username: string): Promise<void> {
+    const userKey = username.toLowerCase().trim();
+    loginFailures.delete(userKey);
+    const user = await db.getUserByUsername(userKey);
+    if (user) {
+      user.failedLoginAttempts = 0;
+      user.lockedUntil = undefined;
+      await db.updateUser(user);
+    }
+  }
+
+  public getLockoutStatus(username: string): {
+    locked: boolean;
+    remainingSeconds: number;
+    lockedUntil: string | null;
+    attempts: number;
+  } {
+    if (!username || typeof username !== 'string') {
+      return { locked: false, lockedOut: false, remainingSeconds: 0, retryAfterSeconds: 0, lockedUntil: null, attempts: 0 };
+    }
+    const userKey = username.toLowerCase().trim();
+    const tracker = loginFailures.get(userKey);
+    if (!tracker) {
+      return { locked: false, lockedOut: false, remainingSeconds: 0, retryAfterSeconds: 0, lockedUntil: null, attempts: 0 };
+    }
+    const now = Date.now();
+    if (tracker.lockedUntil && tracker.lockedUntil > now) {
+      const waitSec = Math.ceil((tracker.lockedUntil - now) / 1000);
+      return {
+        locked: true,
+        lockedOut: true,
+        remainingSeconds: waitSec,
+        retryAfterSeconds: waitSec,
+        lockedUntil: new Date(tracker.lockedUntil).toISOString(),
+        attempts: tracker.count,
+      };
+    }
+    return {
+      locked: false,
+      lockedOut: false,
+      remainingSeconds: 0,
+      retryAfterSeconds: 0,
+      lockedUntil: null,
+      attempts: 0,
+    };
   }
 
   public async logout(sessionToken: string): Promise<boolean> {

@@ -9,6 +9,7 @@ import React, {
 import { motion } from 'framer-motion';
 import { useAppState } from '../../services/stateContext';
 import { useTheme } from '../../services/themeContext';
+import { authService } from '../../services/authService';
 import type { NavigationTab } from '../../types';
 
 export type TransitionState = 'IDLE' | 'ENTERING' | 'NAVIGATING' | 'EXITING';
@@ -60,7 +61,12 @@ export const PageTransitionProvider: React.FC<{ children: ReactNode }> = ({ chil
       return;
     }
 
-    targetRouteRef.current = targetRoute;
+    // Route unauthenticated requests to /login
+    const effectiveTarget = (!authService.isAuthenticated() && targetRoute !== 'landing')
+      ? 'login'
+      : targetRoute;
+
+    targetRouteRef.current = effectiveTarget;
 
     // Respect prefers-reduced-motion
     const prefersReducedMotion = 
@@ -68,7 +74,7 @@ export const PageTransitionProvider: React.FC<{ children: ReactNode }> = ({ chil
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (prefersReducedMotion) {
-      setActiveTab(targetRoute);
+      setActiveTab(effectiveTarget);
       return;
     }
 
@@ -83,11 +89,14 @@ export const PageTransitionProvider: React.FC<{ children: ReactNode }> = ({ chil
     const coverDurationMs = Math.round((0.12 + (NUM_COLUMNS - 1) * ENTER_STAGGER + ENTER_DURATION) * 1000) + 10;
 
     setTimeout(() => {
-      // Phase 5 & 6: Cover complete -> Switch route to Operations
+      // Phase 5 & 6: Cover complete -> Switch route to Operations or Login
       setTransitionState('NAVIGATING');
       try {
         if (typeof window !== 'undefined') {
-          const newPath = targetRouteRef.current === 'landing' ? '/' : '/app';
+          let newPath = '/app';
+          if (targetRouteRef.current === 'landing') newPath = '/';
+          else if (targetRouteRef.current === 'login') newPath = '/login';
+
           if (window.location.pathname !== newPath) {
             window.history.pushState(null, '', newPath);
           }

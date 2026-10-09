@@ -32,7 +32,7 @@ export const FourSystemPillars: React.FC = () => {
       tagline: 'Access Control & Perimeter Interlock',
       subtitle: 'HARDWARE INTERLOCK',
       description: 'Synchronized solenoid locks, PIN authentication gates, and continuous high-definition optical CCTV verification.',
-      icon: <Shield size={18} color="#101820" />,
+      icon: <Shield size={18} color="var(--color-ink-black)" />,
       activeMetrics: `${doors.filter((d) => d.lockStatus === 'locked').length}/${doors.length} Secured Portals · 7 CCTV Streams`,
       targetTab: 'security',
       operationalActions: [
@@ -53,7 +53,7 @@ export const FourSystemPillars: React.FC = () => {
       tagline: 'Sensors, Life Safety & CCTV',
       subtitle: 'MULTISENSOR TELEMETRY',
       description: 'Passive infrared human presence arrays and electrochemical gas spectrometry for hazardous condition detection.',
-      icon: <Eye size={18} color="#101820" />,
+      icon: <Eye size={18} color="var(--color-ink-black)" />,
       activeMetrics: '42 PIR nodes · 312 ppm baseline',
       targetTab: 'safety',
       operationalActions: [
@@ -136,7 +136,7 @@ export const FourSystemPillars: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '14px 24px',
-          backgroundColor: '#FCFCFD',
+          backgroundColor: 'var(--color-surface-sunken, #FCFCFD)',
           borderBottom: '1px solid rgba(16, 24, 32, 0.08)',
         }}
       >
@@ -148,7 +148,7 @@ export const FourSystemPillars: React.FC = () => {
               fontWeight: 700,
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
-              color: '#5B6871',
+              color: 'var(--color-slate-gray)',
             }}
           >
             SYSTEM ARCHITECTURE
@@ -158,7 +158,7 @@ export const FourSystemPillars: React.FC = () => {
             style={{
               fontFamily: "var(--font-mono, monospace)",
               fontSize: '0.688rem',
-              color: '#8A8F8D',
+              color: 'var(--color-slate-gray)',
             }}
           >
             FOUR OPERATIONAL CAPABILITIES
@@ -184,7 +184,7 @@ export const FourSystemPillars: React.FC = () => {
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && setActivePillar(isSelected ? null : pillar.key)}
               style={{
-                backgroundColor: isSelected ? 'rgba(255, 130, 0, 0.03)' : '#FFFFFF',
+                backgroundColor: isSelected ? 'rgba(255, 130, 0, 0.05)' : 'var(--color-paper-white, #FFFFFF)',
                 padding: '22px 24px',
                 borderRight: '1px solid rgba(16, 24, 32, 0.08)',
                 borderBottom: '1px solid rgba(16, 24, 32, 0.08)',
@@ -232,7 +232,7 @@ export const FourSystemPillars: React.FC = () => {
                           fontFamily: "var(--font-display, 'Outfit', sans-serif)",
                           fontSize: '1.1rem',
                           fontWeight: 700,
-                          color: '#101820',
+                          color: 'var(--color-ink-black)',
                           margin: 0,
                           letterSpacing: '-0.02em',
                         }}
@@ -243,7 +243,7 @@ export const FourSystemPillars: React.FC = () => {
                         style={{
                           fontFamily: "var(--font-mono, monospace)",
                           fontSize: '0.625rem',
-                          color: '#8A8F8D',
+                          color: 'var(--color-slate-gray)',
                           letterSpacing: '0.08em',
                         }}
                       >
@@ -265,7 +265,7 @@ export const FourSystemPillars: React.FC = () => {
                     fontFamily: "var(--font-mono, monospace)",
                     fontSize: '0.75rem',
                     fontWeight: 600,
-                    color: isSelected ? '#FF8200' : '#101820',
+                    color: isSelected ? '#FF8200' : 'var(--color-ink-black)',
                     marginBottom: '8px',
                   }}
                 >
@@ -276,7 +276,7 @@ export const FourSystemPillars: React.FC = () => {
                 <p
                   style={{
                     fontSize: '0.75rem',
-                    color: '#5B6871',
+                    color: 'var(--color-slate-gray)',
                     lineHeight: 1.5,
                     margin: 0,
                   }}
@@ -290,7 +290,7 @@ export const FourSystemPillars: React.FC = () => {
                     style={{
                       marginTop: '14px',
                       paddingTop: '12px',
-                      borderTop: '1px solid rgba(16, 24, 32, 0.08)',
+                      borderTop: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.08))',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '6px',
@@ -307,9 +307,9 @@ export const FourSystemPillars: React.FC = () => {
                           fontSize: '0.688rem',
                           fontFamily: "var(--font-mono, monospace)",
                           fontWeight: 700,
-                          backgroundColor: act.isPrimary ? '#101820' : '#FFFFFF',
-                          color: act.isPrimary ? '#FFFFFF' : '#101820',
-                          border: act.isPrimary ? 'none' : '1px solid rgba(16, 24, 32, 0.12)',
+                          backgroundColor: act.isPrimary ? 'var(--color-ink-black)' : 'var(--surface-canvas, #FFFFFF)',
+                          color: act.isPrimary ? 'var(--color-paper-white, #FFFFFF)' : 'var(--color-ink-black)',
+                          border: act.isPrimary ? 'none' : '1px solid var(--border-subtle, rgba(16, 24, 32, 0.12))',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
@@ -317,7 +317,7 @@ export const FourSystemPillars: React.FC = () => {
                         }}
                       >
                         <span>{act.label}</span>
-                        <ChevronRight size={12} color={act.isPrimary ? '#FF8200' : '#5B6871'} />
+                        <ChevronRight size={12} color={act.isPrimary ? '#FF8200' : 'var(--color-slate-gray)'} />
                       </button>
                     ))}
                   </div>
@@ -329,10 +329,10 @@ export const FourSystemPillars: React.FC = () => {
                 style={{
                   marginTop: '16px',
                   paddingTop: '10px',
-                  borderTop: '1px solid rgba(16, 24, 32, 0.06)',
+                  borderTop: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.06))',
                   fontFamily: "var(--font-mono, monospace)",
                   fontSize: '0.688rem',
-                  color: isSelected ? '#101820' : '#8C8C8C',
+                  color: isSelected ? 'var(--color-ink-black)' : 'var(--color-slate-gray)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',

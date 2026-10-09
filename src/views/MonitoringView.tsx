@@ -1,32 +1,83 @@
 import React, { useState } from 'react';
-import { 
-  Video, 
-  Maximize2, 
-  Camera, 
+import {
+  Video,
+  Maximize2,
+  Camera,
   Info,
   X,
   Wifi,
-  AlertTriangle
 } from 'lucide-react';
 import { useAppState } from '../services/stateContext';
-import type { CameraFeed } from '../types';
+import type { CameraFeed, CampusIncident } from '../types';
 import { HeroVideoDialog } from '../components/ui/hero-video-dialog';
+import { CameraStreamSurface } from '../components/overview/CameraStreamSurface';
 
 export const MonitoringView: React.FC = () => {
-  const { cameras, updateCameraStream, setCameraStatus, addToast } = useAppState();
+  const { cameras, updateCameraStream, setCameraStatus, addToast, userRole, setIncidents, addAuditRecord } = useAppState();
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [configCam, setConfigCam] = useState<CameraFeed | null>(null);
   const [streamUrlInput, setStreamUrlInput] = useState('');
   const [isProbing, setIsProbing] = useState(false);
 
-  const zones = ['all', 'Main Perimeter', 'Engineering Block', 'Science Block', 'Central Library', 'Administrative Wing'];
+  const zones = [
+    { id: 'all', label: 'All Campus Feeds' },
+    { id: 'Main Gate', label: 'Main Perimeter & Gate' },
+    { id: 'Innovation & Robotics Lab', label: 'Robotics & Engineering' },
+    { id: 'Central Library', label: 'Central Library' },
+    { id: 'Science & Physics Lab', label: 'Science & Physics Lab' },
+    { id: 'Academic Hallway', label: 'Academic Corridors' },
+    { id: 'Computer Lab', label: 'Computer Lab Systems' },
+    { id: 'Data Center / Server Room', label: 'Data Center & Vault' },
+  ];
 
-  const filteredCameras = selectedZone === 'all' 
-    ? cameras 
-    : cameras.filter(c => c.zone === selectedZone);
+  const filteredCameras = selectedZone === 'all'
+    ? cameras
+    : cameras.filter(c =>
+        c.zone.toLowerCase() === selectedZone.toLowerCase() ||
+        c.zone.toLowerCase().includes(selectedZone.toLowerCase()) ||
+        c.location.toLowerCase().includes(selectedZone.toLowerCase()) ||
+        c.id.toLowerCase() === selectedZone.toLowerCase()
+      );
 
   const handleTakeSnapshot = (cam: CameraFeed) => {
     addToast('Security Snapshot Recorded', `Timestamped frame logged from ${cam.name} (${cam.location}) to operational audit vault.`, 'info');
+  };
+
+  const handleMarkIncident = (cam: CameraFeed) => {
+    if (userRole === 'student') {
+      addToast('Clearance Denied', 'Student role is not authorized to create security incident markers.', 'error');
+      return;
+    }
+    const incId = `INC-CAM-${Date.now().toString().slice(-4)}`;
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const newInc: CampusIncident = {
+      id: incId,
+      event: `Visual Anomaly Flagged — ${cam.name}`,
+      location: cam.location,
+      zone: cam.zone,
+      severity: 'warning',
+      status: 'investigating',
+      timestamp: timeStr,
+      description: `Operator marked security incident on optical channel ${cam.id} (${cam.name}).`,
+      source: 'live',
+      auditTimeline: [
+        {
+          time: timeStr,
+          action: 'CAMERA_INCIDENT_MARKED',
+          actor: userRole.toUpperCase(),
+          notes: `Incident marked on ${cam.name} by ${userRole.toUpperCase()}`,
+        }
+      ]
+    };
+    setIncidents((prev: CampusIncident[]) => [newInc, ...prev]);
+    addAuditRecord(
+      'CAMERA_INCIDENT_MARKED',
+      `${cam.id} (${cam.name})`,
+      'SUCCESS',
+      `Security incident marked via surveillance console by ${userRole.toUpperCase()}`,
+      cam.zone
+    );
+    addToast('Incident Marker Created', `Incident ${incId} created for ${cam.zone}.`, 'warning');
   };
 
   const handleOpenConfig = (cam: CameraFeed) => {
@@ -69,11 +120,11 @@ export const MonitoringView: React.FC = () => {
         </div>
 
         {/* Ethical Compliance Pill Notice */}
-        <div 
-          className="pill-badge pill-badge-neutral" 
-          style={{ 
-            maxWidth: '480px', 
-            padding: '10px 18px', 
+        <div
+          className="pill-badge pill-badge-neutral"
+          style={{
+            maxWidth: '480px',
+            padding: '10px 18px',
             fontSize: '13px',
             lineHeight: 1.4,
             gap: '10px'
@@ -87,171 +138,73 @@ export const MonitoringView: React.FC = () => {
       {/* Zone Filter Pill Controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
         {zones.map(z => {
-          const isSelected = selectedZone === z;
+          const isSelected = selectedZone === z.id;
           return (
             <button
-              key={z}
-              onClick={() => setSelectedZone(z)}
+              key={z.id}
+              onClick={() => setSelectedZone(z.id)}
               className={`pill-btn-sm ${isSelected ? 'active' : ''}`}
             >
-              {z === 'all' ? 'All Campus Feeds' : z}
+              {z.label}
             </button>
           );
         })}
       </div>
 
       {/* CCTV Feeds Grid — Floating Product Artifact Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '28px' }}>
-        {filteredCameras.map(cam => {
-          const isLive = cam.status === 'live';
-          const isOffline = cam.status === 'offline';
+      {filteredCameras.length === 0 ? (
+        <div
+          className="floating-artifact"
+          style={{
+            padding: '48px 24px',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '14px',
+            backgroundColor: 'var(--color-paper-white)',
+          }}
+        >
+          <Video size={36} color="#FF8200" style={{ opacity: 0.8 }} />
+          <h3 style={{ fontFamily: 'var(--font-signifier)', fontSize: '20px', margin: 0, color: 'var(--color-ink-black)' }}>
+            No Camera Channels In Selected Zone
+          </h3>
+          <p style={{ fontSize: '13px', color: 'var(--color-slate-gray)', margin: 0, maxWidth: '420px' }}>
+            There are no registered surveillance nodes matching the selected category. Reset filter to inspect all active campus streams.
+          </p>
+          <button
+            onClick={() => setSelectedZone('all')}
+            className="pill-btn-filled"
+            style={{ marginTop: '8px', padding: '8px 20px', fontSize: '13px' }}
+          >
+            Show All Feeds ({cameras.length})
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '28px' }}>
+          {filteredCameras.map(cam => {
+            const isLive = cam.status === 'live';
+            const isOffline = cam.status === 'offline';
 
-          return (
-            <div 
-              key={cam.id}
-              className="floating-artifact"
-              style={{
-                padding: '20px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '18px'
-              }}
-            >
-              {/* Viewport Card: Steep Ink Black optical surface */}
-              <div 
+            return (
+              <div
+                key={cam.id}
+                className="floating-artifact"
                 style={{
-                  position: 'relative',
-                  height: '210px',
-                  borderRadius: 'var(--radius-smallcards)',
-                  backgroundColor: 'var(--color-ink-black)',
+                  padding: '20px',
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  padding: '16px',
-                  color: 'var(--color-paper-white)',
-                  overflow: 'hidden'
+                  gap: '18px'
                 }}
               >
-                {/* Live Real Stream Image (if active ESP32-CAM stream) */}
-                {isLive && cam.streamUrl ? (
-                  <img
-                    src={cam.streamUrl}
-                    alt={cam.name}
-                    onError={() => setCameraStatus(cam.id, 'offline')}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      zIndex: 1
-                    }}
-                  />
-                ) : (
-                  /* Minimal Optical Grid Reticle */
-                  <div 
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px)',
-                      backgroundSize: '28px 28px',
-                      pointerEvents: 'none'
-                    }}
-                  />
-                )}
-
-                {/* Viewport Top Bar */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 2 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span 
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '3px 10px',
-                        borderRadius: '9999px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.16)',
-                        fontSize: '11px',
-                        fontWeight: 500
-                      }}
-                    >
-                      {isLive ? (
-                        <>
-                          <span className="status-dot status-dot-safe" />
-                          <span>LIVE</span>
-                        </>
-                      ) : isOffline ? (
-                        <>
-                          <span className="status-dot status-dot-warning" />
-                          <span>OFFLINE</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="status-dot status-dot-ink" style={{ opacity: 0.5 }} />
-                          <span>SIMULATION</span>
-                        </>
-                      )}
-                    </span>
-
-                    <span style={{ fontSize: '11px', opacity: 0.75, fontFamily: 'monospace' }}>
-                      {cam.fps} FPS · {cam.resolution}
-                    </span>
-                  </div>
-
-                  <span style={{ fontSize: '11px', opacity: 0.75, fontFamily: 'monospace' }}>
-                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                  </span>
-                </div>
-
-                {/* Viewport Center */}
-                {!isLive && (
-                  <div style={{ alignSelf: 'center', textAlign: 'center', zIndex: 2 }}>
-                    {isOffline ? (
-                      <>
-                        <AlertTriangle size={30} color="var(--color-blush-peach)" style={{ opacity: 0.9, margin: '0 auto 6px' }} />
-                        <div style={{ fontFamily: 'var(--font-signifier)', fontSize: '15px', color: 'var(--color-blush-peach)' }}>
-                          Stream Unavailable
-                        </div>
-                        <div style={{ fontSize: '11px', opacity: 0.65, marginTop: '2px' }}>
-                          Camera endpoint offline / network dropped
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <Video size={32} color="var(--color-blush-peach)" style={{ opacity: 0.8, margin: '0 auto 6px' }} />
-                        <div style={{ fontFamily: 'var(--font-signifier)', fontSize: '16px', fontWeight: 400, letterSpacing: '0.02em' }}>
-                          Optical Stream
-                        </div>
-                        <div style={{ fontSize: '11px', opacity: 0.65 }}>
-                          No physical hardware connected (Simulation)
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Viewport Bottom Info */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 2 }}>
-                  <span style={{ fontSize: '11px', opacity: 0.75, fontFamily: 'monospace' }}>
-                    {cam.id}
-                  </span>
-
-                  {cam.ptzCapable && (
-                    <span 
-                      style={{
-                        fontSize: '10px',
-                        fontWeight: 500,
-                        padding: '2px 8px',
-                        borderRadius: '9999px',
-                        backgroundColor: 'rgba(251, 225, 209, 0.2)',
-                        color: 'var(--color-blush-peach)'
-                      }}
-                    >
-                      PTZ
-                    </span>
-                  )}
-                </div>
-              </div>
+                {/* Viewport: Deterministic CameraStreamSurface */}
+                <CameraStreamSurface
+                  camera={cam}
+                  minHeight="210px"
+                  onSnapshot={() => handleTakeSnapshot(cam)}
+                  onMarkIncident={() => handleMarkIncident(cam)}
+                  onRetryConnection={() => handleResetToSimulation()}
+                />
 
               {/* Camera Details & Metrics */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -271,7 +224,7 @@ export const MonitoringView: React.FC = () => {
                 </div>
 
                 {/* Compact telemetry container */}
-                <div 
+                <div
                   style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(3, 1fr)',
@@ -301,7 +254,7 @@ export const MonitoringView: React.FC = () => {
                 </div>
 
                 {/* Matched Pill Buttons */}
-                <div 
+                <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -361,10 +314,11 @@ export const MonitoringView: React.FC = () => {
           );
         })}
       </div>
+    )}
 
       {/* ESP32-CAM Stream Configuration Modal */}
       {configCam && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             inset: 0,
@@ -377,7 +331,7 @@ export const MonitoringView: React.FC = () => {
             zIndex: 300
           }}
         >
-          <div 
+          <div
             className="floating-artifact"
             style={{
               maxWidth: '520px',
@@ -401,7 +355,7 @@ export const MonitoringView: React.FC = () => {
                   {configCam.name} ({configCam.id})
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setConfigCam(null)}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-slate-gray)' }}
               >
@@ -544,10 +498,10 @@ const ExpandedCameraDialogContent: React.FC<ExpandedCameraDialogContentProps> = 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span 
+            <span
               className={`pill-badge ${isLive ? 'pill-badge-safe' : (isOffline ? 'pill-badge-peach' : 'pill-badge-neutral')}`}
-              style={{ 
-                fontSize: '11px', 
+              style={{
+                fontSize: '11px',
                 fontWeight: 500,
                 letterSpacing: '0.04em',
                 padding: '3px 10px'
@@ -557,7 +511,7 @@ const ExpandedCameraDialogContent: React.FC<ExpandedCameraDialogContentProps> = 
               {isLive ? `LIVE · ${camera.id}` : (isOffline ? `OFFLINE · ${camera.id}` : `SIMULATION · ${camera.id}`)}
             </span>
 
-            <span 
+            <span
               className="pill-badge pill-badge-neutral"
               style={{
                 fontSize: '11px',
@@ -570,7 +524,7 @@ const ExpandedCameraDialogContent: React.FC<ExpandedCameraDialogContentProps> = 
             </span>
 
             {camera.ptzCapable && (
-              <span 
+              <span
                 style={{
                   fontSize: '10px',
                   fontWeight: 500,
@@ -585,11 +539,11 @@ const ExpandedCameraDialogContent: React.FC<ExpandedCameraDialogContentProps> = 
             )}
           </div>
 
-          <h2 
-            style={{ 
-              fontFamily: 'var(--font-signifier)', 
-              fontSize: '26px', 
-              fontWeight: 400, 
+          <h2
+            style={{
+              fontFamily: 'var(--font-signifier)',
+              fontSize: '26px',
+              fontWeight: 400,
               color: 'var(--color-ink-black)',
               margin: 0,
               lineHeight: 1.2
@@ -597,10 +551,10 @@ const ExpandedCameraDialogContent: React.FC<ExpandedCameraDialogContentProps> = 
           >
             {camera.name}
           </h2>
-          <p 
-            style={{ 
-              fontFamily: 'var(--font-sohne)', 
-              fontSize: '13px', 
+          <p
+            style={{
+              fontFamily: 'var(--font-sohne)',
+              fontSize: '13px',
               color: 'var(--color-slate-gray)',
               margin: 0
             }}
@@ -634,146 +588,26 @@ const ExpandedCameraDialogContent: React.FC<ExpandedCameraDialogContentProps> = 
       </div>
 
       {/* 2. CENTER: Large Optical Viewport */}
-      <div 
+      <div
         style={{
           position: 'relative',
-          height: '420px',
+          minHeight: '400px',
           borderRadius: 'var(--radius-smallcards)',
-          backgroundColor: 'var(--color-ink-black)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: '20px',
-          color: 'var(--color-paper-white)',
           overflow: 'hidden'
         }}
       >
-        {isLive && camera.streamUrl ? (
-          <img
-            src={camera.streamUrl}
-            alt={camera.name}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              zIndex: 1
-            }}
-          />
-        ) : (
-          <div 
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px)',
-              backgroundSize: '28px 28px',
-              pointerEvents: 'none'
-            }}
-          />
-        )}
-
-        {/* Viewport Corner Brackets */}
-        <div style={{ position: 'absolute', top: 12, left: 12, width: 14, height: 14, borderTop: '2px solid rgba(255,255,255,0.3)', borderLeft: '2px solid rgba(255,255,255,0.3)', pointerEvents: 'none', zIndex: 3 }} />
-        <div style={{ position: 'absolute', top: 12, right: 12, width: 14, height: 14, borderTop: '2px solid rgba(255,255,255,0.3)', borderRight: '2px solid rgba(255,255,255,0.3)', pointerEvents: 'none', zIndex: 3 }} />
-        <div style={{ position: 'absolute', bottom: 12, left: 12, width: 14, height: 14, borderBottom: '2px solid rgba(255,255,255,0.3)', borderLeft: '2px solid rgba(255,255,255,0.3)', pointerEvents: 'none', zIndex: 3 }} />
-        <div style={{ position: 'absolute', bottom: 12, right: 12, width: 14, height: 14, borderBottom: '2px solid rgba(255,255,255,0.3)', borderRight: '2px solid rgba(255,255,255,0.3)', pointerEvents: 'none', zIndex: 3 }} />
-
-        {/* Top Information Strip */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 2, fontSize: '12px', fontFamily: 'monospace' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span 
-              style={{ 
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                backgroundColor: 'rgba(255,255,255,0.14)',
-                padding: '3px 10px',
-                borderRadius: '9999px',
-                fontSize: '11px',
-                fontWeight: 500
-              }}
-            >
-              <span className={`status-dot ${isLive ? 'status-dot-safe' : (isOffline ? 'status-dot-warning' : 'status-dot-ink')}`} />
-              {isLive ? 'OPTICAL STREAM · ACTIVE' : (isOffline ? 'STREAM · OFFLINE' : 'SYNTHETIC STREAM · SIMULATION')}
-            </span>
-            <span style={{ opacity: 0.8 }}>
-              {camera.fps} FPS · {camera.resolution}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', opacity: 0.8 }}>
-            <span>{camera.streamUrl ? camera.streamUrl : `NODE-0${camera.id.replace(/\D/g, '') || '1'}.CAMPUS.INT`}</span>
-            <span>{new Date().toLocaleTimeString()}</span>
-          </div>
-        </div>
-
-        {/* Center Optical Stream Visualization (if not live) */}
-        {!isLive && (
-          <div style={{ alignSelf: 'center', textAlign: 'center', zIndex: 2 }}>
-            <div 
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '9999px',
-                backgroundColor: 'rgba(251, 225, 209, 0.12)',
-                border: '1px solid rgba(251, 225, 209, 0.25)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 12px auto'
-              }}
-            >
-              {isOffline ? (
-                <AlertTriangle size={30} color="var(--color-blush-peach)" style={{ opacity: 0.9 }} />
-              ) : (
-                <Video size={30} color="var(--color-blush-peach)" style={{ opacity: 0.9 }} />
-              )}
-            </div>
-            <div 
-              style={{ 
-                fontFamily: 'var(--font-signifier)', 
-                fontSize: '22px', 
-                fontWeight: 400, 
-                letterSpacing: '0.01em',
-                color: 'var(--color-paper-white)'
-              }}
-            >
-              {isOffline ? 'Camera Stream Unavailable' : 'Optical Simulation Stream'}
-            </div>
-            <div style={{ fontSize: '12px', opacity: 0.65, marginTop: '4px' }}>
-              {camera.name} · {isOffline ? 'Physical hardware connection lost' : 'Calibrated Synthetic Sensor Matrix'}
-            </div>
-            <div style={{ marginTop: '12px' }}>
-              <span 
-                style={{
-                  fontSize: '10px',
-                  letterSpacing: '1.5px',
-                  textTransform: 'uppercase',
-                  padding: '4px 10px',
-                  borderRadius: '9999px',
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  color: 'var(--color-ash-gray)',
-                  fontFamily: 'monospace'
-                }}
-              >
-                {isOffline ? 'OFFLINE · RECHECK ENDPOINT' : 'SOURCE · SIMULATION · NO BIOMETRIC PROCESSING'}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Bottom Policy & Transport Line */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 2, fontSize: '11px', opacity: 0.75 }}>
-          <span>POLICY COMPLIANCE: ZERO FACIAL RECOGNITION · OPTICAL ANOMALY ONLY</span>
-          <span style={{ fontFamily: 'monospace' }}>SIGNAL: {isOffline ? 'DISCONNECTED' : '-54 DBM (OPTIMAL)'}</span>
-        </div>
+        <CameraStreamSurface
+          camera={camera}
+          minHeight="400px"
+          onSnapshot={onSnapshot}
+          onMarkIncident={() => {}}
+        />
       </div>
 
       {/* 3. BOTTOM: Telemetry Metrics & Action Buttons */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {/* Telemetry Grid */}
-        <div 
+        <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',

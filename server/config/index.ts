@@ -25,6 +25,12 @@ export interface ServerConfig {
   wsMaxPayloadBytes: number;
   deviceApiKey: string;
   allowAnonymousWsUpgrade: boolean;
+  googleClientId: string;
+  googleClientSecret: string;
+  googleOAuthRedirectUri: string;
+  frontendUrl: string;
+  authMaxFailedAttempts: number;
+  authLockoutMinutes: number;
 }
 
 import crypto from 'crypto';
@@ -78,6 +84,20 @@ export const config: ServerConfig = {
   wsMaxPayloadBytes: Number(process.env.WS_MAX_PAYLOAD_BYTES || 65536),
   deviceApiKey: process.env.DEVICE_API_KEY || DEFAULT_DEV_DEVICE_API_KEY,
   allowAnonymousWsUpgrade: process.env.ALLOW_ANONYMOUS_WS_UPGRADE === 'true',
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+  googleOAuthRedirectUri: process.env.GOOGLE_OAUTH_REDIRECT_URI || (
+    process.env.NODE_ENV === 'production'
+      ? 'https://campus-api.internal/api/auth/google/callback'
+      : 'http://localhost:8080/api/auth/google/callback'
+  ),
+  frontendUrl: process.env.FRONTEND_URL || (
+    process.env.NODE_ENV === 'production'
+      ? 'https://campus.internal'
+      : 'http://localhost:5173'
+  ),
+  authMaxFailedAttempts: Number(process.env.AUTH_MAX_FAILED_ATTEMPTS || 3),
+  authLockoutMinutes: Number(process.env.AUTH_LOCKOUT_MINUTES || 15),
 };
 
 export const INSECURE_FALLBACK_SECRETS: string[] & { sessionSecret: string; deviceApiKey: string } = Object.assign(

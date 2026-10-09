@@ -154,6 +154,7 @@ describe('Security Remediation Phase 1 — Direct Exploit Regression Suite', () 
       const data = await res.json();
       assert.strictEqual(data.success, false, 'Arbitrary password must be rejected');
       assert.strictEqual(data.session, undefined);
+      await serverAuth.clearLockout('student');
     });
 
     it('fails closed when verifying password against a malformed stored hash', () => {

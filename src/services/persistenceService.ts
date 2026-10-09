@@ -13,6 +13,9 @@ const STORAGE_KEYS = {
   DOORS: 'campus_persistence_doors_v1',
   USER_ROLE: 'campus_persistence_role_v1',
   LOCKDOWN_ZONES: 'campus_persistence_lockdown_v1',
+  SESSION_TOKEN: 'campus_persistence_session_token_v1',
+  SESSION_EXPIRY: 'campus_persistence_session_expiry_v1',
+  SESSION_USER: 'campus_persistence_session_user_v1',
 } as const;
 
 export class PersistenceService {
@@ -159,6 +162,63 @@ export class PersistenceService {
     } catch {
       return null;
     }
+  }
+
+  // Session Management (SEC-LOW-02 & Token Storage)
+  public saveSessionToken(token: string, expiresAt?: string): void {
+    try {
+      this.setItem(STORAGE_KEYS.SESSION_TOKEN, token);
+      if (expiresAt) {
+        this.setItem(STORAGE_KEYS.SESSION_EXPIRY, expiresAt);
+      }
+    } catch {}
+  }
+
+  public loadSessionToken(): string | null {
+    try {
+      return this.getItem(STORAGE_KEYS.SESSION_TOKEN);
+    } catch {
+      return null;
+    }
+  }
+
+  public loadSessionExpiry(): string | null {
+    try {
+      return this.getItem(STORAGE_KEYS.SESSION_EXPIRY);
+    } catch {
+      return null;
+    }
+  }
+
+  public saveSessionUser(user: any): void {
+    try {
+      this.setItem(STORAGE_KEYS.SESSION_USER, JSON.stringify(user));
+    } catch {}
+  }
+
+  public loadSessionUser(): any | null {
+    try {
+      const data = this.getItem(STORAGE_KEYS.SESSION_USER);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  public clearSessionUser(): void {
+    try {
+      this.removeItem(STORAGE_KEYS.SESSION_USER);
+      this.removeItem(STORAGE_KEYS.USER_ROLE);
+    } catch {}
+  }
+
+  public clearSessionToken(): void {
+    try {
+      this.removeItem(STORAGE_KEYS.SESSION_TOKEN);
+      this.removeItem(STORAGE_KEYS.SESSION_EXPIRY);
+      this.removeItem(STORAGE_KEYS.SESSION_USER);
+      this.removeItem(STORAGE_KEYS.USER_ROLE);
+    } catch {}
   }
 
   // Clear all persistent records

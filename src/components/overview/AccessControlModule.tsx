@@ -127,7 +127,7 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
               justifyContent: 'center',
             }}
           >
-            {isLocked ? <Lock size={14} color="#101820" /> : <Unlock size={14} color="#22c55e" />}
+            {isLocked ? <Lock size={14} color="var(--color-ink-black)" /> : <Unlock size={14} color="#22c55e" />}
           </div>
           <div>
             <span
@@ -137,7 +137,7 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
                 fontWeight: 700,
                 letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                color: '#5B6871',
+                color: 'var(--color-slate-gray)',
               }}
             >
               ACCESS CONTROL
@@ -173,9 +173,9 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
           flexWrap: 'wrap',
           gap: '12px',
           padding: '12px 16px',
-          backgroundColor: '#FCFCFD',
+          backgroundColor: 'var(--color-mist-gray, #FCFCFD)',
           borderRadius: '10px',
-          border: '1px solid rgba(16, 24, 32, 0.06)',
+          border: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.06))',
           marginBottom: '16px',
         }}
       >
@@ -184,7 +184,7 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
             style={{
               fontFamily: "var(--font-mono, monospace)",
               fontSize: '0.625rem',
-              color: '#8C8C8C',
+              color: 'var(--color-slate-gray)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
             }}
@@ -196,13 +196,13 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
               fontFamily: "var(--font-display, sans-serif)",
               fontSize: '1.05rem',
               fontWeight: 700,
-              color: '#101820',
+              color: 'var(--color-ink-black)',
               marginTop: '2px',
             }}
           >
             {serverDoor.name.toUpperCase()}
           </div>
-          <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', color: '#5B6871', marginTop: '2px' }}>
+          <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.688rem', color: 'var(--color-slate-gray)', marginTop: '2px' }}>
             {serverDoor.id} · {serverDoor.building}
           </div>
         </div>
@@ -218,7 +218,7 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
                 padding: '3px 8px',
                 borderRadius: '4px',
                 backgroundColor: isLocked ? 'rgba(16, 24, 32, 0.08)' : 'rgba(34, 197, 94, 0.1)',
-                color: isLocked ? '#101820' : '#22c55e',
+                color: isLocked ? 'var(--color-ink-black)' : '#22c55e',
                 letterSpacing: '0.06em',
               }}
             >
@@ -238,9 +238,9 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
               fontSize: '0.688rem',
               fontFamily: "var(--font-mono, monospace)",
               fontWeight: 600,
-              backgroundColor: canManageDoors ? '#FFFFFF' : '#F5F5F5',
+              backgroundColor: canManageDoors ? 'var(--surface-canvas, #FFFFFF)' : 'var(--color-mist-gray, #F5F5F5)',
               border: '1px solid rgba(16, 24, 32, 0.15)',
-              color: canManageDoors ? '#101820' : '#A0A0A0',
+              color: canManageDoors ? 'var(--color-ink-black)' : '#A0A0A0',
               borderRadius: '6px',
               cursor: canManageDoors ? 'pointer' : 'not-allowed',
             }}
@@ -263,7 +263,7 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
         <div
           style={{
             padding: '10px 14px',
-            backgroundColor: '#FCFCFD',
+            backgroundColor: 'var(--surface-section-fog, #FCFCFD)',
             borderRadius: '8px',
             border: '1px solid rgba(16, 24, 32, 0.06)',
           }}
@@ -271,10 +271,10 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
           <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: '#8C8C8C', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             AUTHORIZED USERS
           </div>
-          <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1.25rem', fontWeight: 700, color: '#101820', marginTop: '2px' }}>
+          <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-ink-black)', marginTop: '2px' }}>
             23
           </div>
-          <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: '#5B6871', marginTop: '2px' }}>
+          <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: 'var(--color-slate-gray)', marginTop: '2px' }}>
             Active RFID / PIN Cards
           </div>
         </div>
@@ -282,7 +282,7 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
         <div
           style={{
             padding: '10px 14px',
-            backgroundColor: '#FCFCFD',
+            backgroundColor: 'var(--surface-section-fog, #FCFCFD)',
             borderRadius: '8px',
             border: '1px solid rgba(16, 24, 32, 0.06)',
           }}
@@ -290,7 +290,7 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
           <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: '#8C8C8C', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             LAST ACCESS
           </div>
-          <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1.25rem', fontWeight: 700, color: '#101820', marginTop: '2px' }}>
+          <div style={{ fontFamily: "var(--font-display, sans-serif)", fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-ink-black)', marginTop: '2px' }}>
             {serverDoor.lastEventTime || '08:41:12'}
           </div>
           <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', color: '#22c55e', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -307,16 +307,16 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
             ? 'rgba(34, 197, 94, 0.04)'
             : authState === 'DENIED' || authState === 'SECURITY_ALERT'
             ? 'rgba(255, 0, 0, 0.04)'
-            : '#F7F8F9',
+            : 'var(--color-mist-gray, #F7F8F9)',
           borderRadius: '10px',
-          border: '1px solid rgba(16, 24, 32, 0.08)',
+          border: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.08))',
           marginBottom: '12px',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Key size={12} color="#5B6871" />
-            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', fontWeight: 700, color: '#5B6871', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <Key size={12} color="var(--color-slate-gray)" />
+            <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: '0.625rem', fontWeight: 700, color: 'var(--color-slate-gray)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               KEYPAD PIN AUTHENTICATOR
             </span>
           </div>
@@ -326,7 +326,7 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
               fontFamily: "var(--font-mono, monospace)",
               fontSize: '0.625rem',
               fontWeight: 700,
-              color: authState === 'GRANTED' ? '#22c55e' : authState === 'DENIED' || authState === 'SECURITY_ALERT' ? '#FF0000' : '#5B6871',
+              color: authState === 'GRANTED' ? '#22c55e' : authState === 'DENIED' || authState === 'SECURITY_ALERT' ? '#FF0000' : 'var(--color-slate-gray)',
             }}
           >
             {authState === 'IDLE' ? 'READY' : authState}
@@ -341,9 +341,9 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
             justifyContent: 'center',
             gap: '10px',
             padding: '10px',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface-canvas, #FFFFFF)',
             borderRadius: '6px',
-            border: '1px solid rgba(16, 24, 32, 0.1)',
+            border: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.1))',
             marginBottom: '10px',
           }}
         >
@@ -354,12 +354,12 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
                 width: '14px',
                 height: '14px',
                 borderRadius: '50%',
-                backgroundColor: pinInput.length > idx ? '#101820' : 'rgba(16, 24, 32, 0.1)',
+                backgroundColor: pinInput.length > idx ? 'var(--color-ink-black)' : 'var(--border-subtle, rgba(16, 24, 32, 0.1))',
                 transition: 'background-color 0.15s ease',
               }}
             />
           ))}
-          <span style={{ marginLeft: '12px', fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', color: '#8C8C8C' }}>
+          <span style={{ marginLeft: '12px', fontFamily: "var(--font-mono, monospace)", fontSize: '0.75rem', color: 'var(--color-slate-gray)' }}>
             {pinInput ? pinInput.replace(/./g, '•') : 'ENTER 4-DIGIT PIN'}
           </span>
         </div>
@@ -374,9 +374,9 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
               style={{
                 height: '32px',
                 borderRadius: '6px',
-                backgroundColor: '#FFFFFF',
-                border: '1px solid rgba(16, 24, 32, 0.12)',
-                color: '#101820',
+                backgroundColor: 'var(--surface-card-mist, #FFFFFF)',
+                border: '1px solid var(--border-subtle, rgba(16, 24, 32, 0.12))',
+                color: 'var(--color-ink-black)',
                 fontFamily: "var(--font-mono, monospace)",
                 fontSize: '0.813rem',
                 fontWeight: 600,
@@ -398,7 +398,7 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
               borderRadius: '6px',
               backgroundColor: 'rgba(16, 24, 32, 0.04)',
               border: '1px solid rgba(16, 24, 32, 0.08)',
-              color: '#5B6871',
+              color: 'var(--color-slate-gray)',
               fontFamily: "var(--font-mono, monospace)",
               fontSize: '0.625rem',
               fontWeight: 700,
@@ -416,9 +416,9 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
             style={{
               height: '32px',
               borderRadius: '6px',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface-canvas, #FFFFFF)',
               border: '1px solid rgba(16, 24, 32, 0.12)',
-              color: '#101820',
+              color: 'var(--color-ink-black)',
               fontFamily: "var(--font-mono, monospace)",
               fontSize: '0.813rem',
               fontWeight: 600,
@@ -436,9 +436,9 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
             style={{
               height: '32px',
               borderRadius: '6px',
-              backgroundColor: pinInput.length >= 4 ? '#101820' : 'rgba(16, 24, 32, 0.06)',
+              backgroundColor: pinInput.length >= 4 ? 'var(--color-ink-black)' : 'rgba(16, 24, 32, 0.06)',
               border: 'none',
-              color: pinInput.length >= 4 ? '#FFFFFF' : '#8A8F8D',
+              color: pinInput.length >= 4 ? 'var(--color-paper-white)' : '#8A8F8D',
               fontFamily: "var(--font-mono, monospace)",
               fontSize: '0.625rem',
               fontWeight: 700,
@@ -536,7 +536,7 @@ export const AccessControlModule: React.FC<AccessControlModuleProps> = ({ onNavi
       </div>
 
       {/* Footer Info */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.688rem', fontFamily: "var(--font-mono, monospace)", color: '#5B6871', paddingTop: '10px', borderTop: '1px solid rgba(16, 24, 32, 0.06)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.688rem', fontFamily: "var(--font-mono, monospace)", color: 'var(--color-slate-gray)', paddingTop: '10px', borderTop: '1px solid rgba(16, 24, 32, 0.06)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <ShieldCheck size={12} color="#22c55e" />
           <span>SOLENOID INTERLOCK ACTIVE · DEMO PINS: 4821 / 1234</span>

@@ -32,7 +32,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
     if (eventType.toLowerCase().includes('access') || eventType.toLowerCase().includes('pin')) return <ShieldCheck size={13} color="#22c55e" />;
     if (eventType.toLowerCase().includes('energy') || eventType.toLowerCase().includes('lights')) return <Zap size={13} color="#FF8200" />;
     if (eventType.toLowerCase().includes('gas') || eventType.toLowerCase().includes('sensor')) return <CheckCircle2 size={13} color="#22c55e" />;
-    return <Activity size={13} color="#101820" />;
+    return <Activity size={13} color="var(--color-ink-black)" />;
   };
 
   const getResultBadge = (result: string) => {
@@ -44,7 +44,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
       case 'ESCALATED':
         return { bg: 'rgba(255, 0, 0, 0.08)', color: '#FF0000', text: 'ESCALATED' };
       default:
-        return { bg: 'rgba(16, 24, 32, 0.06)', color: '#5B6871', text: result };
+        return { bg: 'rgba(16, 24, 32, 0.06)', color: 'var(--color-slate-gray)', text: result };
     }
   };
 
@@ -76,13 +76,13 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
               fontWeight: 700,
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
-              color: '#5B6871',
+              color: 'var(--color-slate-gray)',
               marginBottom: '4px',
             }}
           >
-            <Clock size={13} color="#101820" />
+            <Clock size={13} color="var(--color-ink-black)" />
             <span>OPERATIONAL TIMELINE</span>
-            <span style={{ color: 'rgba(16, 24, 32, 0.25)' }}>·</span>
+            <span style={{ color: 'var(--color-slate-gray)', opacity: 0.5 }}>·</span>
             <span>REALTIME TELEMETRY</span>
           </div>
 
@@ -98,14 +98,14 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                 fontFamily: "var(--font-display, 'Outfit', sans-serif)",
                 fontSize: '1.25rem',
                 fontWeight: activeMode === 'activity' ? 700 : 500,
-                color: activeMode === 'activity' ? '#101820' : '#8C8C8C',
+                color: activeMode === 'activity' ? 'var(--color-ink-black)' : 'var(--color-slate-gray)',
                 transition: 'all 0.15s ease',
               }}
             >
               Live Activity Feed
             </button>
 
-            <span style={{ color: 'rgba(16, 24, 32, 0.15)', fontSize: '1.25rem' }}>/</span>
+            <span style={{ color: 'var(--color-slate-gray)', opacity: 0.4, fontSize: '1.25rem' }}>/</span>
 
             <button
               onClick={() => setActiveMode('audit')}
@@ -118,7 +118,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                 fontFamily: "var(--font-display, 'Outfit', sans-serif)",
                 fontSize: '1.25rem',
                 fontWeight: activeMode === 'audit' ? 700 : 500,
-                color: activeMode === 'audit' ? '#101820' : '#8C8C8C',
+                color: activeMode === 'audit' ? 'var(--color-ink-black)' : 'var(--color-slate-gray)',
                 transition: 'all 0.15s ease',
               }}
             >
@@ -139,14 +139,14 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
             fontFamily: "var(--font-mono, monospace)",
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
-            color: '#5B6871',
+            color: 'var(--color-slate-gray)',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
             transition: 'color 0.15s ease',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#101820')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#5B6871')}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-ink-black)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-slate-gray)')}
         >
           <span>FULL AUDIT LEDGER</span>
           <ArrowRight size={12} color="#FF8200" />
@@ -197,7 +197,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                         fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
                         fontSize: '0.75rem',
                         fontWeight: 700,
-                        color: '#101820',
+                        color: 'var(--color-ink-black)',
                         letterSpacing: '0.04em',
                         width: '72px',
                         flexShrink: 0,
@@ -234,17 +234,17 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                             fontFamily: "var(--font-display, sans-serif)",
                             fontSize: '0.813rem',
                             fontWeight: 600,
-                            color: '#101820',
+                            color: 'var(--color-ink-black)',
                           }}
                         >
                           {evt.eventType}
                         </span>
-                        <span style={{ color: '#8C8C8C', fontSize: '0.75rem' }}>·</span>
+                        <span style={{ color: 'var(--color-slate-gray)', opacity: 0.5, fontSize: '0.75rem' }}>·</span>
                         <span
                           style={{
                             fontFamily: "var(--font-mono, monospace)",
                             fontSize: '0.688rem',
-                            color: '#5B6871',
+                            color: 'var(--color-slate-gray)',
                           }}
                         >
                           {evt.location}
@@ -254,7 +254,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                       <span
                         style={{
                           fontSize: '0.688rem',
-                          color: '#8A8F8D',
+                          color: 'var(--color-slate-gray)',
                           marginTop: '2px',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
@@ -323,7 +323,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                       fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
                       fontSize: '0.75rem',
                       fontWeight: 700,
-                      color: '#101820',
+                      color: 'var(--color-ink-black)',
                       letterSpacing: '0.04em',
                       width: '72px',
                       flexShrink: 0,
@@ -344,7 +344,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                       flexShrink: 0,
                     }}
                   >
-                    <FileText size={13} color="#101820" />
+                    <FileText size={13} color="var(--color-ink-black)" />
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -365,7 +365,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                         style={{
                           fontFamily: "var(--font-mono, monospace)",
                           fontSize: '0.688rem',
-                          color: '#5B6871',
+                          color: 'var(--color-slate-gray)',
                         }}
                       >
                         ACTION: {rec.action}
@@ -383,7 +383,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
                     <span
                       style={{
                         fontSize: '0.688rem',
-                        color: '#5B6871',
+                        color: 'var(--color-slate-gray)',
                         marginTop: '2px',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',

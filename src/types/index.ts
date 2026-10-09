@@ -120,7 +120,7 @@ export interface IoTDevice {
   firmware: string;
 }
 
-export type CameraStreamState = 'live' | 'offline' | 'simulation';
+export type CameraStreamState = 'live' | 'offline' | 'simulation' | 'connecting' | 'no_signal' | 'error';
 
 export interface CameraFeed {
   id: string;
@@ -139,6 +139,7 @@ export interface CameraFeed {
 
 export type NavigationTab = 
   | 'landing'
+  | 'login'
   | 'overview' 
   | 'monitoring' 
   | 'security' 
